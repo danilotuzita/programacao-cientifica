@@ -22,7 +22,7 @@ class Queue
 			T operator--();
 
 		// CONSULTATION FUNCTIONS
-		T top();
+		T first();
 		int count();
 
 		// UTIL FUNCTIONS
