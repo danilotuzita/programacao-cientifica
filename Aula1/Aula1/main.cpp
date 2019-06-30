@@ -220,6 +220,7 @@ int main()
 		_queue(&queueFile);
 	queueFile.close();
 
-	system("PAUSE");
+	string s;
+	cin >> s;
 	return 0;
 }
