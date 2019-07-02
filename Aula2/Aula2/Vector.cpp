@@ -1,3 +1,4 @@
+/*
 #include "Vector.h"
 
 template <class T>
@@ -18,6 +19,7 @@ Vector<T>::~Vector() { delete[] list; } // deleting the list from memory
 template<class T>
 void Vector<T>::_reserve(int newSize) // Reallocates the list size (Internal-use)
 {
+	std::cout << "Reserving more space from: " << maxSize << " to: " << newSize << "\n";
 	if (newSize < 1)
 		throw std::bad_array_new_length();
 
@@ -54,17 +56,13 @@ void Vector<T>::shrink_to_fit()
 	_reserve(size());
 }
 
-template<class T>
-int Vector<T>::capacity() {	return maxSize; }
-
 // === BASIC FUNCTIONS === //
 template<class T>
 void Vector<T>::push_back(T value)
 {
-	_size++;
-	if (is_full()) // if the list is full
+	if (++_size > maxSize - 1) // if user needs more space
 		_reserve(maxSize * maxSize + (maxSize == 1)); // allocates more memory
-	// (maxSize == 1) fixes a bad allocation if maxSize = 1
+	// NOTE: (maxSize == 1) fixes a bad allocation if maxSize = 1
 
 	list[_size] = value; // sets the item on the vector
 }
@@ -106,20 +104,35 @@ template<class T>
 T Vector<T>::begin() { return at(0); }
 
 template<class T>
+void Vector<T>::print()
+{
+	std::cout << "[ ";
+	for (int i = 0; i < maxSize; i++)
+	{
+		if (i < size())
+			std::cout << at(i) << " ";
+		else
+			std::cout << "# ";
+	}
+	std::cout << "]\n";
+}
+
+//		operators
+template<class T>
 void Vector<T>::operator<<(T value) { push_back(value); }
 
 template<class T>
 T Vector<T>::operator[](int index) const { return at(index); }
 
-template<class T>
-T &Vector<T>::operator[](int index) { return at(index); }
+//template<class T>
+//T &Vector<T>::operator[](int index) { return at(index); }
 
 // === UTIL === //
 template<class T>
-int Vector<T>::size()
-{
-	return _size + 1; // size points to the index of the last item included
-}
+int Vector<T>::size() { return _size + 1; } // real size of the vector
+
+template<class T>
+int Vector<T>::capacity() { return maxSize; }
 
 template<class T>
 bool Vector<T>::empty() { return (size() == 0); }
@@ -134,4 +147,4 @@ template class Vector<double>;
 template class Vector<char>;
 template class Vector<bool>;
 template class Vector<std::string>;
-template <class T> class Vector< Vector<T> >;
+*/
