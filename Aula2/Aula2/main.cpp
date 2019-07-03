@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Vector.h"
+#include "Vector.hpp"
 
 #define pause system("PAUSE")
 
@@ -108,14 +108,9 @@ void vector_vector()
 	pause;
 }
 
-Vector<int> bfs(Vector< Vector<int>* > graph, int start)
+Vector< Vector<int>* >* adjlist_to_graph()
 {
-	return Vector<int>();
-}
-
-Vector< Vector<int>* > adjlist_to_graph()
-{
-	Vector< Vector<int>* > graph(1);
+	auto graph = new Vector< Vector<int>* >();
 	string line;
 	
 	cout << "Press enter 2 times to end graph\n";
@@ -135,22 +130,56 @@ Vector< Vector<int>* > adjlist_to_graph()
 		item->push_back(stoi(line.substr(last, i - last)));
 		item->shrink_to_fit();
 		item->print();
-		graph.push_back(item);
+		graph->push_back(item);
 		getline(cin, line);
 	}
 	
-	graph.shrink_to_fit(); // TODO: quebrando aqui, acho q é no return
+	graph->shrink_to_fit();
 	return graph;
 }
+
+Vector<int> bfs(Vector< Vector<int>* > graph, int start)
+{
+	Vector<int> dist(1); // distance vector
+	dist.resize(graph.size(), 0); // filling the dist with zeros
+	Queue<int> q; // search queue
+	
+	int index = start;
+	Vector<int>* currentNode = graph[index]; // accessing start node
+	for (int i = 0; i < currentNode->size(); i++) // for each connected node of the starting node
+		q << (*currentNode)[i]; // pushes it to the search queue
+
+	while (!q.isEmpty())
+	{
+	}
+
+	return dist;
+}
+
 
 int main()
 {
 	//vector_vector();
 	//_operator();
+	
+	//Vector<int> teste(10, 5);
+	//teste.print();
 
 	auto graph = adjlist_to_graph();
+	auto distances = bfs(*graph, 0);
 
 
-
+	pause;
 	return 0;
 }
+
+/* GRAPH
+1 2
+0 2 3 7
+0 1 3 4 6 7
+1 2 4
+2 3 5
+4 6 7
+2 5 7
+1 2 5 6
+*/
