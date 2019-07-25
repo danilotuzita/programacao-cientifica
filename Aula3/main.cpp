@@ -1,13 +1,8 @@
-#include <iostream>
-#include <Vector.hpp>
-#include <Queue.hpp>
-#include <Stack.hpp>
-#include <time.h>
+#include "Graphs.h"
 
 #define pause system("PAUSE")
 
 using namespace std;
-
 // == unitary test functions == //
 
 void _operator()
@@ -121,140 +116,50 @@ void equal_operator(Vector< Vector<int>* > graph)
 	graph2[1]->print();
 }
 
+void sort_test()
+{
+	cout << "int\n";
+	Vector<int> v(10);
+
+	for (int i = 10; i > 0; i--)
+		v.push_back(i);
+
+	v.print();
+	v.sort();
+	v.print();
+
+	cout << "float\n";
+	Vector<float> f(10);
+
+	for (int i = 10; i > 0; i--)
+		f.push_back(i * 1.08);
+
+	f.print();
+	f.sort();
+	f.print();
+
+	cout << "double\n";
+	Vector<double> d(10);
+
+	for (int i = 10; i > 0; i--)
+		d.push_back(i * .8);
+
+	d.print();
+	d.sort(false);
+	d.print();
+
+	cout << "char\n";
+	Vector<char> c(10);
+
+	for (int i = 10; i > 0; i--)
+		c.push_back(i + 64);
+
+	c.print();
+	c.sort();
+	c.print();
+}
+
 // == unitary test functions == //
-
-// input matrix function
-Vector< Vector<int>* >* input_adjmatrix()
-{
-	auto graph = new Vector< Vector<int>* >();
-	string line;
-
-	cout << "Press enter 2 times to end graph\n";
-	getline(cin, line);
-	while (line != "")
-	{
-		auto item = new Vector<int>();
-		unsigned int i = 0, last = 0;
-		for (; i < line.size(); i++)
-		{
-			if (line[i] == ' ')
-			{
-				item->push_back(stoi(line.substr(last, i - last)));
-				last = i + 1;
-			}
-		}
-		item->push_back(stoi(line.substr(last, i - last)));
-		item->shrink_to_fit();
-		//item->print();
-		graph->push_back(item);
-		getline(cin, line);
-	}
-
-	graph->shrink_to_fit();
-	return graph;
-}
-
-int input_node(int size, string prefix="Starting")
-{
-	int ret;
-	cout << prefix << " node: ";
-	cin >> ret;
-	while (ret >= size || ret < 0)
-	{
-		cout << "The node must be between 0 and " << size - 1 << "\n";
-		cout << prefix << " node: ";
-		cin >> ret;
-	}
-	return ret;
-}
-
-// Returns a distance vector
-Vector<int> bfs_distances(Vector< Vector<int>* > graph, int start, bool debug=false) // graph must be adjacency matrix
-{
-	// creating varibales
-	Vector<int> dist(graph.size(), -1);      // distance vector | stores the distance to reach each node from starting node | dist = -1: cannot reach from starting node
-	Vector<bool> color(graph.size(), false); // color vector    | stores which nodes have been visited | color = false: node has not been visited
-	Queue<int> q;                            // search queue    | stores the index of the nodes to search next
-
-	Vector<int>* currentNode; // current node
-	int index;                // current node index
-
-	dist[start] = 0; // setting distance of the starting node to the starting node as 0
-	color[start] = true; // setting the starting node as visited
-	q << start; // pushing start node to the search queue
-
-	while (!q.isEmpty()) // while search queue is not empty
-	{
-		index = q.pop(); // gets the index of the next node to search
-		currentNode = graph[index]; // setting the currentNode as the [index] node
-		if (debug) cout << "Searching node: " << index << endl;
-
-		for (int i = 0; i < currentNode->size(); i++) // for each possibly connected node
-		{
-			if ((*currentNode)[i] && !color[i]) // if the current node is connected to [i] node and has not been visited
-			{
-				if (debug) cout << "Acessing node: " << i << endl;
-				q << i;                    // pushes [i] node to the search queue
-				color[i] = true;           // sets the [i] node as visited
-				dist[i] = dist[index] + 1; // sets the [i] node distance to the [start]node as the distance of this node's father plus one
-			}
-		}
-	}
-	
-	return dist; // returning dist vector
-}
-
-// Returns a distance vector
-Vector<int> dfs_distances(Vector< Vector<int>* > graph, int start, bool debug=false) // graph must be adjacency matrix
-{
-	// creating varibales
-	Vector<int> dist(graph.size(), -1);      // distance vector | stores the distance to reach each node from starting node | dist = -1: cannot reach from starting node
-	Vector<bool> color(graph.size(), false); // color vector    | stores which nodes have been visited | color = false: node has not been visited
-	Stack<int> s;                            // search stack    | stores the index of the nodes to search next
-
-	Vector<int>* currentNode; // current node
-	int index;                // current node index
-
-	dist[start] = 0; // setting distance of the starting node to the starting node as 0
-	color[start] = true; // setting the starting node as visited
-	s << start; // pushing start node to the search stack
-
-	while (!s.isEmpty()) // while search stack is not empty
-	{
-		index = s.pop(); // gets the index of the next node to search
-		currentNode = graph[index]; // setting the currentNode as the [index] node
-		if (debug) cout << "Searching node: " << index << endl;
-
-		for (int i = 0; i < currentNode->size(); i++) // for each possibly connected node
-		{
-			if ((*currentNode)[i] && !color[i]) // if the current node is connected to [i] node and has not been visited
-			{
-				if (debug) cout << "Acessing node: " << i << endl;
-				s << i;                    // pushes [i] node to the search stack
-				color[i] = true;           // sets the [i] node as visited
-				dist[i] = dist[index] + 1; // sets the [i] node distance to the [start]node as the distance of this node's father plus one
-			}
-		}
-	}
-	
-	return dist; // returning dist vector
-}
-
-// Returns the shortest path
-int bfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool debug=false) // graph must be adjacency matrix
-{
-	Vector<int> dist;
-	dist = bfs_distances(graph, start, debug);
-	return dist[end];
-}
-
-// Returns the shortest path
-int dfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool debug=false) // graph must be adjacency matrix
-{
-	Vector<int> dist;
-	dist = dfs_distances(graph, start, debug);
-	return dist[end];
-}
 
 // UNITARY TESTS
 void tests()
@@ -267,16 +172,67 @@ void tests()
 
 	auto graph = input_adjmatrix();
 	equal_operator(*graph);
+
+	sort_test();
+}
+
+void bfs_dfs()
+{
+	bool debug = true;
+	
+	cout << "Generating adjaceny matrix here: \n";
+	auto graph = generate_adjmatrix(15, 0.2);
+	bool _continue = true;
+	while (_continue)
+	{
+		int s, e;
+		s = input_node(graph->size(), "Starting");
+		e = input_node(graph->size(), "End");
+
+		cout << " ===== BFS ALGORITHM =====\n";
+		clock_t tStartBFS = clock();
+		auto distanceBFS = bfs_shortest_path(*graph, s, e, debug);
+		clock_t deltaBFS = clock() - tStartBFS;
+		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceBFS << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", deltaBFS, ((float)deltaBFS) / CLOCKS_PER_SEC);
+
+		cout << " ===== DFS ALGORITHM =====\n";
+		clock_t tStartDFS = clock();
+		auto distanceDFS = dfs_shortest_path(*graph, s, e, debug);
+		clock_t deltaDFS = clock() - tStartDFS;
+		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceDFS << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", deltaDFS, ((float)deltaDFS) / CLOCKS_PER_SEC);
+
+		pause;
+		cout << "Try another node? ";
+		cin >> _continue;
+	}
+
+	delete graph;
+}
+
+void a_star()
+{
+	//auto graph = generate_adjmatrix(9, 0.5, false, 10);
+	
+	cout << "Paste your adjaceny matrix here: \n";
+	auto graph = input_adjmatrix();
+	aStar(graph, 0, 1, simpleHeuristic);
 }
 
 int main()
 {
-	// tests();
+	//tests();
 
-	bool debug;
-	cout << "Debug mode: ";
-	cin >> debug;
 
+	//bfs_dfs();
+	a_star();
+	pause;
+	return 0;
+
+	bool debug = true;
+	/*cout << "Debug mode: ";
+	cin >> debug;*/
 	cout << "Paste your adjaceny matrix here: \n";
 	auto graph = input_adjmatrix();
 	bool _continue = true;
@@ -304,6 +260,7 @@ int main()
 		cout << "Try another node? ";
 		cin >> _continue;
 	}
+
 	delete graph;
 	return 0;
 }

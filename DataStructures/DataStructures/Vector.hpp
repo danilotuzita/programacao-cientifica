@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+#include <cstdlib>
 
 template <class T>
 class Vector
@@ -16,10 +17,15 @@ private:
 	void _reserve(int newSize); // reserves a new list (may be more or less than the old maxSize)
 	void realloc_if_needed();   // reserves more memory if the user needs it
 
+	// SORT HELPER FUNCTION
+	void _sort(bool ascending);
+	       static int q_number_sort_asc(const void* a1, const void* a2);                                        // function that is passed to the quicksort ascending
+	inline static int q_number_sort_dsc(const void* a1, const void* a2) { return -q_number_sort_asc(a1, a2); }; // function that is passed to the quicksort descending
+
 public:
 	// CONSTRUCTOR/DESTRUCTOR
-	Vector(int max=10);
-	Vector(int max, T def);  // creates a vector with a default value
+	Vector(int max=10);        // creates a vector with max items allocated (not assigned)
+	Vector(int max, T def);    // creates a vector with a default value
 	Vector(Vector<T> &other);  // creates a vector coping another
 	inline ~Vector() { delete[] list; }; // deletes list from memory
 	
@@ -31,7 +37,7 @@ public:
 	// UTIL
 	inline int size()     const { return _size + 1; };              // gets the real size of the vector
 	inline int capacity() const { return maxSize; };                // returns the capacity of the vector (current maxSize)
-	inline bool empty()         { return (size() == 0); };          // check if the vector is empty
+	inline bool is_empty()      { return (size() == 0); };          // check if the vector is empty
 	inline bool is_full()       { return (_size == maxSize - 1); }; // checks if the vector is full
 
 	// BASIC FUNCTIONS
@@ -39,6 +45,10 @@ public:
 	void push_back(T value);         // pushes an item at the end of the vector
 	void set_at(int index, T value); // sets a value in a specific index; NOTE: calls LHS operator[]
 	T pop_back();                    // pops the last value and returns it
+
+	// SORTING
+	void sort(bool ascending=true);                      // sorts the vector with the default sorting function (works only for int, float, double, char)
+	void sort(int(*compar)(const void *, const void *)); // sorts the vector with a specific sort comparing function (should mainly be used if you can't use the default sort function)
 
 	// access functions
 	T at(int index) const; // returns the item at index
@@ -54,8 +64,9 @@ public:
 		T& operator[](const int index);                                   //  left-hand side operator[] (LHS)
 		
 		// debug functions
-		void print();
-		void print_size();
+		void print();        // prints the vector with bracets
+		void simple_print(); // prints the vector without bracets
+		void print_size();   // prints the vector size and capacitys
 };
 
 template <class T>
@@ -70,17 +81,16 @@ Vector<T>::Vector(int max)
 }
 
 template<class T>
-inline Vector<T>::Vector(int max, T def):Vector(1) { resize(max, def); }
+inline Vector<T>::Vector(int max, T def) : Vector(1) { resize(max, def); }   // creates a vector with one item and resizes it putting a default value def
 
 template<class T>
-inline Vector<T>::Vector(Vector<T> &other) : Vector(1) { copy_from(other); }
+inline Vector<T>::Vector(Vector<T> &other) : Vector(1) { copy_from(other); } // creates a vector with one item and copies the content of the other vector
 
 // === MEMORY UTIL === //
 template<class T>
 void Vector<T>::_reserve(int newSize) // Reallocates the list size (Internal-use)
 {
-	//std::cout << "Reserving Space; From " << maxSize << " to " << newSize << "\n";
-	if (newSize < 1)
+	if (newSize < 1) // making sure the vector has at least capacity of 1
 		throw std::bad_array_new_length();
 
 	T* newList = new T[newSize];     // creating a new list that fits the new size
@@ -115,6 +125,21 @@ inline void Vector<T>::realloc_if_needed()
 	// NOTE: (maxSize == 1) fixes a bad allocation if maxSize = 1
 }
 
+template<class T>
+inline void Vector<T>::_sort(bool ascending)
+{
+	if (ascending) std::qsort(list, size(), sizeof(T), q_number_sort_asc);
+	else           std::qsort(list, size(), sizeof(T), q_number_sort_dsc);
+}
+
+template<class T>
+int Vector<T>::q_number_sort_asc(const void * a1, const void * a2)
+{
+	if (*(T*)a1 < *(T*)a2) return -1;
+	if (*(T*)a1 > *(T*)a2) return  1;
+	return  0;
+}
+
 template <class T>
 void Vector<T>::shrink_to_fit()
 {
@@ -139,11 +164,18 @@ void Vector<T>::set_at(int index, T value) { (*this)[index] = value; } // callin
 template<class T>
 T Vector<T>::pop_back()
 {
-	if (empty()) // if the vector is empty
+	if (is_empty()) // if the vector is empty
 		throw std::out_of_range("Vector is empty");
 
 	return at(_size--); // returns the last item and reduce it's size
 }
+
+template<class T>
+void Vector<T>::sort(int(*compar)(const void *, const void *)) { std::qsort(list, size(), sizeof(T), compar); }
+template<> inline void Vector<int>::sort(bool ascending)    { _sort(ascending); } // if T is int calls the default sorting function
+template<> inline void Vector<float>::sort(bool ascending)  { _sort(ascending); } // if T is float calls the default sorting function
+template<> inline void Vector<double>::sort(bool ascending) { _sort(ascending); } // if T is double calls the default sorting function
+template<> inline void Vector<char>::sort(bool ascending)   { _sort(ascending); } // if T is char calls the default sorting function
 
 template<class T>
 T Vector<T>::at(int index) const
@@ -176,6 +208,20 @@ void Vector<T>::print()
 			std::cout << "# ";
 	}
 	std::cout << "]\n";
+}
+
+template<class T>
+void Vector<T>::simple_print()
+{
+	for (int i = 0; i < maxSize; i++)
+	{
+		if (i < size())
+			std::cout << at(i) << " ";
+		else
+			std::cout << "# ";
+	}
+
+	std::cout << "\n";
 }
 
 template<class T>
