@@ -167,7 +167,9 @@ T Vector<T>::pop_back()
 	if (is_empty()) // if the vector is empty
 		throw std::out_of_range("Vector is empty");
 
-	return at(_size--); // returns the last item and reduce it's size
+	T value = at(_size); // saves the last item 
+	_size--; // reduce list size
+	return value;
 }
 
 template<class T>

@@ -217,24 +217,7 @@ void a_star()
 	
 	cout << "Paste your adjaceny matrix here: \n";
 	auto graph = input_adjmatrix();
-	aStar(graph, 0, 1, simpleHeuristic);
-}
 
-int main()
-{
-	//tests();
-
-
-	//bfs_dfs();
-	a_star();
-	pause;
-	return 0;
-
-	bool debug = true;
-	/*cout << "Debug mode: ";
-	cin >> debug;*/
-	cout << "Paste your adjaceny matrix here: \n";
-	auto graph = input_adjmatrix();
 	bool _continue = true;
 	while (_continue)
 	{
@@ -242,26 +225,27 @@ int main()
 		s = input_node(graph->size(), "Starting");
 		e = input_node(graph->size(), "End");
 
-		cout << " ===== BFS ALGORITHM =====\n";
-		clock_t tStartBFS = clock();
-		auto distanceBFS = bfs_shortest_path(*graph, s, e, debug);
-		clock_t deltaBFS = clock() - tStartBFS;
-		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceBFS << endl;
-		printf("This algorithm took %d ticks (%f s)\n\n", deltaBFS, ((float)deltaBFS) / CLOCKS_PER_SEC);
+		cout << " ===== A* ALGORITHM =====\n";
+		clock_t tStartA = clock();
+		auto d = aStar(graph, s, e, simpleHeuristic);
+		clock_t deltaA = clock() - tStartA;
+		cout << "The distance of the node " << s << " to the node " << e << " is: " << d << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", d, ((float)deltaA) / CLOCKS_PER_SEC);
 		
-		cout << " ===== DFS ALGORITHM =====\n";
-		clock_t tStartDFS = clock();
-		auto distanceDFS = dfs_shortest_path(*graph, s, e, debug);
-		clock_t deltaDFS = clock() - tStartDFS;
-		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceDFS << endl;
-		printf("This algorithm took %d ticks (%f s)\n\n", deltaDFS, ((float)deltaDFS) / CLOCKS_PER_SEC);
-
 		pause;
 		cout << "Try another node? ";
 		cin >> _continue;
 	}
+}
 
-	delete graph;
+int main()
+{
+	//tests();
+
+	//bfs_dfs();
+	a_star();
+
+	pause;
 	return 0;
 }
 
