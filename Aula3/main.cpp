@@ -216,7 +216,8 @@ void a_star()
 	//auto graph = generate_adjmatrix(9, 0.5, false, 10);
 	
 	cout << "Paste your adjaceny matrix here: \n";
-	auto graph = input_adjmatrix();
+	//auto graph = input_adjmatrix();
+	auto graph = generate_adjmatrix_from_maze();
 
 	bool _continue = true;
 	while (_continue)
@@ -244,7 +245,8 @@ int main()
 
 	//bfs_dfs();
 	a_star();
-
+	//auto g = generate_adjmatrix_from_maze();
+	
 	pause;
 	return 0;
 }

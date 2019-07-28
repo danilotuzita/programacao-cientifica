@@ -121,7 +121,7 @@ template<class T>
 inline void Vector<T>::realloc_if_needed()
 {
 	if (_size > maxSize - 1) // if user needs more space
-		_reserve(maxSize * maxSize + (maxSize == 1)); // allocates more memory
+		_reserve(maxSize * 2 + (maxSize == 1)); // allocates more memory
 	// NOTE: (maxSize == 1) fixes a bad allocation if maxSize = 1
 }
 

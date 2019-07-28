@@ -11,6 +11,7 @@ using namespace std;
 
 // GRAPH GENERATION / INPUT UTIL
 Vector< Vector<int>* >* generate_adjmatrix(int nodeCount, double chance, bool directional = false, int max_weight = 1);
+Vector< Vector<int>* >* generate_adjmatrix_from_maze(bool diagonal = false);
 Vector< Vector<int>* >* input_adjmatrix();
 int input_node(int size, string prefix = "Starting");
 

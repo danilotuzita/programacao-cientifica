@@ -43,6 +43,99 @@ Vector< Vector<int>* >* generate_adjmatrix(int nodeCount, double chance, bool di
 	return graph;
 }
 
+// graph generator from maze
+Vector< Vector<int>* >* generate_adjmatrix_from_maze(bool diagonal)
+{
+	Vector< Vector<int> > maze(100);
+	int width = -1, height = -1;
+
+	string line;
+	cout << "Press enter 2 times to end graph\n";
+	std::getline(cin, line);
+	while (line != "") // while did not press enter 2 times
+	{
+		Vector<int> item(1); // creates a line of the matrix
+		if (width != -1) item.reserve(width);
+		unsigned int i = 0, last = 0;
+		for (; i < line.size(); i++) // reading the line and pushing it to the item
+		{
+			if (line[i] == ' ')
+			{
+				item.push_back(stoi(line.substr(last, i - last)));
+				last = i + 1;
+			}
+		}
+		item.push_back(stoi(line.substr(last, i - last)));
+		item.shrink_to_fit();
+
+		maze.push_back(item); // pushin the item to the matrix
+		
+		if (width == -1) width = item.size(); // saving the width of the maze
+
+		if (item.size() != width) // break if line is broken
+		{
+			cout << "TAMANHO ERRADO!!!!!\n";
+			system("pause");
+			throw std::out_of_range("birajoejfaeifjeoaj");
+		}
+
+		std::getline(cin, line);
+	}
+
+	maze.shrink_to_fit();
+	height = maze.size(); // saving the height of the maze
+
+	int sides[9][2] = { // matrix to access the "neighbors" of a node
+		{ 0, -1}, // up 
+		{-1,  0}, // left
+		{ 1,  0}, // right
+		{ 0,  1}, // down
+		{-1, -1}, // top left
+		{ 1, -1}, // top right
+		{-1,  1}, // bottom left
+		{ 1,  1}  // bottom right
+	};
+
+	int s; // number of item in the sides matrix
+	s = 4; // just accessing up, left, right, down
+	if (diagonal) // if you want to access its diagonals as well
+		s = 9;
+
+	auto graph = new Vector<Vector<int>*>(); // creates a adjacency matrix
+	for (int i = 0; i < height * width; i++) // populates it with lines
+		graph->push_back(new Vector<int>(height * width, 0));
+
+	for (int j = 0; j < height; j++) // for each line in the maze
+	{
+		for (int i = 0; i < width; i++) // for each column in the maze
+		{
+			if (maze[j][i]) // if the node is accessible
+			{
+				int nodeIndex = j * width + i; // calculates it's index
+				for (int k = 0; k < s; k++) // for each side
+				{
+					int x = i + sides[k][0]; // gets the x of it's neighbor
+					int y = j + sides[k][1]; // gets the y of it's neighbor
+
+					if (x >= 0 && x < width &&
+						y >= 0 && y < width) // if neighbour is not out of range
+					{
+						int connectedNodeIndex = y * width + x; // calculates it's index
+						graph->at(nodeIndex)->set_at(connectedNodeIndex, maze[y][x]); // sets the node distance from the neighbor in the graph
+						graph->at(nodeIndex)->set_at(connectedNodeIndex, maze[y][x]); // sets the neighbor distance from the node in the graph
+					}
+				}
+			}
+		}
+	}
+	/*
+	for (int i = 0; i < height * width; i++) // printing adjacency matrix
+		graph->at(i)->simple_print();
+	*/
+	return graph;
+}
+
+
 // input matrix function
 Vector< Vector<int>* >* input_adjmatrix()
 {
@@ -197,7 +290,7 @@ void printNode(aStarNode* node)
 			printf(
 				"Node [%d]\n"
 				"	dist: %d\n"
-				"	heur: %d\n"
+				"	heur: %f\n"
 				"	prev: %d\n",
 				node->index, node->dist, node->heur_weight, node->prev_node->index
 			);
@@ -205,7 +298,7 @@ void printNode(aStarNode* node)
 			printf(
 				"Node [%d]\n"
 				"	dist: %d\n"
-				"	heur: %d\n"
+				"	heur: %f\n"
 				"	prev: null\n",
 				node->index, node->dist, node->heur_weight
 			);
@@ -264,10 +357,12 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 		aStarNode* currentNode = nodes[currentNodeIndex];            // sets the current node
 		Vector<int>* currentNodeEdges = graph->at(currentNodeIndex); // list of edges of current node
 		
+		/*
 		cout << "searchQueue: [\n" << currentNode->index << " " << currentNode->dist + currentNode->heur_weight << endl;
 		for (int i = searchQueue.size() - 1; i > -1; i--)
 			cout << searchQueue[i]->index << " " << searchQueue[i]->dist + searchQueue[i]->heur_weight << endl;
 		cout << "]\nCurrentNode: " << currentNodeIndex << endl;
+		*/
 
 		if (currentNodeIndex == end) // if we reached the end
 			break; // breaks the loop
@@ -281,10 +376,7 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 				aStarNode* connectedNode = nodes[i]; // sets the connected node
 				int newDist = edgeWeight + currentNode->dist;
 
-				printNode(connectedNode);
-				printf("	ndst: %d\n", newDist);
-				
-				if (connectedNode->dist == -1 || connectedNode->dist > newDist) // if the i connected node dist is infinity OR this new path is more efficient
+				if (connectedNode->dist == -1 || newDist < connectedNode->dist) // if the i connected node dist is infinity OR this new path is more efficient
 				{
 					connectedNode->dist = newDist;          // sets the distance of the connected node to the origin as the new path's distance
 					connectedNode->prev_node = currentNode; // sets the he previous node of the connected node as the current node
@@ -295,6 +387,9 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 					if (color[i] == 0) // if connected node is not in the queue AND have been fully visited
 						searchQueue << connectedNode; // pushes it to the search queue
 				}
+
+				//printNode(connectedNode);
+				//printf("	ndst: %d\n", newDist);
 			}
 		}
 	}
@@ -303,7 +398,7 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 	{
 		aStarNode* n = nodes[end];
 		cout << "Path: ";
-		while (n->prev_node)
+		while (n != nullptr)
 		{
 			cout << n->index << " ";
 			n = n->prev_node;

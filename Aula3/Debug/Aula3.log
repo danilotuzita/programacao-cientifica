@@ -1,9 +1,7 @@
 ﻿  Graphs.cpp
 d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\datastructures\datastructures\item.hpp(3): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(198): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 2 has type 'double'
-d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(198): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 3 has type 'double'
-d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(206): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 2 has type 'double'
-d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(206): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 3 has type 'double'
-d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(282): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(289): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(291): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 2 has type 'double'
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(299): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 2 has type 'double'
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(377): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula3\graphs.cpp(381): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
   Aula3.vcxproj -> D:\Danilo S. Tuzita\Documents\FEI\Mestrado\1.programacao-cientifica\Aula3\Debug\Aula3.exe
