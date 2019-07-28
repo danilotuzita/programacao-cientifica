@@ -278,7 +278,7 @@ int dfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool deb
 typedef struct aStarNodeT
 {
 	int index = -1;
-	float dist = -1;
+	int dist = -1;
 	float heur_weight = -1;
 	aStarNodeT* prev_node = nullptr;
 } aStarNode;
@@ -325,13 +325,18 @@ int aStarNode_sort(const void * a1, const void * a2)
 	return 0;
 }
 
+float dijkstra(Vector< Vector<int>* >* g, const int node, const int goal)
+{
+	return 0.f;
+}
 
 float simpleHeuristic(Vector< Vector<int>* >* g, const int node, const int goal)
 {
-	return 0;
+	if (node == 5 || node == 6 || node == 7) return 1.1f;
+	return 99.1f;
 }
 
-float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal))
+int aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal))
 {
 	int numberOfNodes = graph->size();
 
@@ -357,20 +362,12 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 		aStarNode* currentNode = nodes[currentNodeIndex];            // sets the current node
 		Vector<int>* currentNodeEdges = graph->at(currentNodeIndex); // list of edges of current node
 		
-		/*
-		cout << "searchQueue: [\n" << currentNode->index << " " << currentNode->dist + currentNode->heur_weight << endl;
-		for (int i = searchQueue.size() - 1; i > -1; i--)
-			cout << searchQueue[i]->index << " " << searchQueue[i]->dist + searchQueue[i]->heur_weight << endl;
-		cout << "]\nCurrentNode: " << currentNodeIndex << endl;
-		*/
-
 		if (currentNodeIndex == end) // if we reached the end
 			break; // breaks the loop
-
+		
 		for (int i = 0; i < numberOfNodes; i++) // for each possible edge
 		{
 			int edgeWeight = (*currentNodeEdges)[i]; // gets the distance from current node to the [i] node | if 0 then current node is not connected to the [i] node
-			
 			if (edgeWeight > 0 && color[i] < 2) // if the node is connected to the [i] node AND the [i] node have not been fully visited
 			{
 				aStarNode* connectedNode = nodes[i]; // sets the connected node
@@ -382,18 +379,22 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 					connectedNode->prev_node = currentNode; // sets the he previous node of the connected node as the current node
 					
 					if (connectedNode->heur_weight == -1)   // if the connected mode's heristic weight have not been calculated yet
-						connectedNode->heur_weight = heuristicFunction(graph, currentNodeIndex, end);
+						connectedNode->heur_weight = heuristicFunction(graph, i, end);
 
-					if (color[i] == 0) // if connected node is not in the queue AND have been fully visited
+					if (color[i] == 0) // if connected node is not in the queue AND have not been fully visited
+					{
 						searchQueue << connectedNode; // pushes it to the search queue
+						color[i] = 1; // setting node as "on queue"
+					}
 				}
-
-				//printNode(connectedNode);
-				//printf("	ndst: %d\n", newDist);
 			}
 		}
+		
+		color[currentNodeIndex] = 2; // setting node as visited
 	}
 	
+	color.print();
+
 	if (nodes[end]->prev_node != nullptr) // if there is a path back to the origin
 	{
 		aStarNode* n = nodes[end];
@@ -405,11 +406,6 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 		}
 		cout << endl;
 	}
-
-	/*
-	for (int i = searchQueue.size(); i > -1; i--)
-		printNode(nodes[i]);
-	*/
 
 	return nodes[end]->dist;
 }
@@ -425,4 +421,15 @@ float aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristic
 0 0 0 6 0 2 0 3 4
 4 6 0 0 0 8 3 0 0
 6 8 1 2 0 0 4 0 0
+*/
+
+/*
+0 1 0 0 0 0 0 0
+1 0 1 0 0 5 0 0
+0 1 0 1 0 0 0 0
+0 0 1 0 1 0 0 0
+0 0 0 1 0 0 0 0
+0 5 0 0 0 0 5 0
+0 0 0 0 0 5 0 5
+0 0 0 0 0 0 5 0
 */

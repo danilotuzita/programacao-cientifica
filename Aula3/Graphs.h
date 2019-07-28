@@ -25,4 +25,5 @@ int dfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool deb
 
 // A*
 float simpleHeuristic(Vector< Vector<int>* >* g, const int node, const int goal);
-float aStar(Vector< Vector<int>* >* graph, int start, int end, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal));
+float dijkstra(Vector< Vector<int>* >* g, const int node, const int goal);
+int aStar(Vector< Vector<int>* >* graph, int start, int end, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal));
