@@ -117,7 +117,7 @@ Vector< Vector<int>* >* generate_adjmatrix_from_maze(bool diagonal)
 					int x = i + sides[k][0]; // gets the x of it's neighbor
 					int y = j + sides[k][1]; // gets the y of it's neighbor
 
-					if (x >= 0 && x < width &&
+					if (x >= 0 && x < width && // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA this might be wrong (x < height); it didn't fail yet so...
 						y >= 0 && y < width) // if neighbour is not out of range
 					{
 						int connectedNodeIndex = y * width + x; // calculates it's index
@@ -167,15 +167,58 @@ Vector< Vector<int>* >* input_adjmatrix()
 	return graph;
 }
 
+Vector< Vector<int>* >* input_maze()
+{
+	auto maze = new Vector< Vector<int>* >();
+	int width = -1;
+
+	string line;
+	cout << "Press enter 2 times to end graph\n";
+	std::getline(cin, line);
+	while (line != "") // while did not press enter 2 times
+	{
+		auto item = new Vector<int>(1); // creates a line of the matrix
+		if (width != -1) item->reserve(width);
+		unsigned int i = 0, last = 0;
+		for (; i < line.size(); i++) // reading the line and pushing it to the item
+		{
+			if (line[i] == ' ')
+			{
+				item->push_back(stoi(line.substr(last, i - last)));
+				last = i + 1;
+			}
+		}
+		item->push_back(stoi(line.substr(last, i - last)));
+		item->shrink_to_fit();
+
+		maze->push_back(item); // pushin the item to the matrix
+
+		if (width == -1) width = item->size(); // saving the width of the maze
+
+		if (item->size() != width) // break if line is broken
+		{
+			delete maze;
+			cout << "TAMANHO ERRADO!!!!!\n";
+			system("pause");
+			throw std::out_of_range("birajoejfaeifjeoaj");
+		}
+
+		std::getline(cin, line);
+	}
+
+	maze->shrink_to_fit();
+	return maze;
+}
+
 int input_node(int size, string prefix)
 {
 	int ret;
-	cout << prefix << " node: ";
+	cout << prefix;
 	cin >> ret;
 	while (ret >= size || ret < 0)
 	{
 		cout << "The node must be between 0 and " << size - 1 << "\n";
-		cout << prefix << " node: ";
+		cout << prefix;
 		cin >> ret;
 	}
 	return ret;
@@ -264,25 +307,78 @@ Vector<int> dfs_distances(Vector< Vector<int>* > graph, int start, bool debug) /
 	return dist; // returning dist vector
 }
 
-// Returns the shortest path
-int dfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool debug) // graph must be adjacency matrix
+Vector< Vector<int>* >* dfs_maze(Vector< Vector<int>* >* graph, Point start, bool diagonal, bool debug) // graph must be adjacency matrix
 {
-	Vector<int> dist;
-	dist = dfs_distances(graph, start, debug);
-	return dist[end];
+	int height = graph->size();        // height of the maze
+	int width = (*(*graph)[0]).size(); // width of the maze
+
+	// creating varibales
+	auto dist = new Vector< Vector<int>* >(height);   // distance vector | stores the distance to reach each node from starting node | dist = -1: cannot reach from starting node
+	Vector< Vector<bool>* > color(height);            // color vector    | stores which nodes have been visited | color = false: node has not been visited
+	Stack<Point> s;                                   // search queue    | stores the index of the nodes to search next
+	
+	for (int i = 0; i < height; i++)
+		*dist << new Vector<int>(width, -1);     // populating dist vector
+	for (int i = 0; i < height; i++)
+		color << new Vector<bool>(width, false); // populating color vector
+
+	// matrix to access the "neighbors" of a node
+	Point sides[9] = {
+		{ 0, -1}, // up 
+		{-1,  0}, // left
+		{ 1,  0}, // right
+		{ 0,  1}, // down
+		{-1, -1}, // top left
+		{ 1, -1}, // top right
+		{-1,  1}, // bottom left
+		{ 1,  1}  // bottom right
+	};
+	int n = 4 + (5 * diagonal); // if diagonal is true n will be 9
+
+	Point p; // current node position
+
+	(*(*dist)[start.x])[start.y] = 0;  // setting distance of the starting node to the starting node as 0
+	(*color[start.x])[start.y] = true; // setting the starting node as visited
+	s << start;                        // pushing start node to the search stack
+
+	while (!s.isEmpty()) // while search stack is not empty
+	{
+		p = s.pop(); // gets the index of the next node to search
+		if (debug) cout << "Searching node: [" << p.x << ", " << p.y << "]" << endl;
+
+		for (int i = 0; i < n; i++) // for each neighbour node
+		{
+			int x = p.x + sides[i].x; // calculating x of the neighbour node
+			int y = p.y + sides[i].y; // calculating y of the neighbour node
+
+			if (x >= 0 && x < height &&
+				y >= 0 && y < width) // if neighbour is not out of range
+			{
+				if ((*(*graph)[x])[y] && !(*color[x])[y]) // if the neighbour is accessible and has not been visited
+				{
+					Point newPoint = {x, y};
+					if (debug) cout << "Acessing node: [" << p.x << ", " << p.y << "]" << endl;
+					s << newPoint;         // pushes neighbour to the search stack
+					(*color[x])[y] = true; // sets the neighbour node as visited
+					(*(*dist)[x])[y] = (*(*dist)[p.x])[p.y] + (*(*graph)[x])[y]; // sets the neighbour node distance to the [start]node as it's weight plus the distance of this node's father
+				}
+			}
+		}
+	}
+
+
+	// printing dist
+	for (int i = 0; i < height; i++)
+	{
+		for (int j = 0; j < width; j++)
+			printf("%3d ", (*(*dist)[i])[j]);
+		printf("\n");
+	}
+
+	return dist; // returning dist vector
 }
 
-
 // ====== A* ====== //
-
-typedef struct aStarNodeT
-{
-	int index = -1;
-	int dist = -1;
-	float heur_weight = -1;
-	aStarNodeT* prev_node = nullptr;
-} aStarNode;
-
 void printNode(aStarNode* node)
 {
 	if (node != nullptr)
@@ -410,6 +506,139 @@ int aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristicFu
 	return nodes[end]->dist;
 }
 
+void drawMaze(Vector< Vector<int>* >* board)
+{
+	system("CLS");
+
+	int height = board->size();
+	for (int y = 0; y < height; y++)
+	{
+		Vector<int>* line = (*board)[y];
+		int height = line->size();
+		for (int x = 0; x < height; x++)
+		{
+			printf("%d ", (*line)[x]);
+		}
+		printf("\n");
+	}
+}
+
+int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagonal, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal))
+{
+	int height = graph->size();        // height of the maze
+	int width = (*(*graph)[0]).size(); // width of the maze
+
+	int numberOfNodes = height * width;
+
+	// creating varibales
+	Vector<aStarNode*> nodes(numberOfNodes); // node vector  | stores info about each node
+	Vector<int> color(numberOfNodes, 0);     // color vector | stores which nodes have been visited or is already queued | color = 0: node has not been visited
+	//                                                                                                                   | color = 1: node is on queue 
+	//                                                                                                                   | color = 2: node has been visited
+
+	for (int i = 0; i < numberOfNodes; i++)
+		nodes << new aStarNode{ /*index = */ i }; // creating a list of aStarNodes
+
+	int start_index = start.x * width + start.y;
+	int end_index = end.x * width + end.y;
+
+	nodes[start_index]->dist = 0;                                                       // setting the distance from the origin (start node) of the start node as 0
+	nodes[start_index]->heur_weight = heuristicFunction(graph, start_index, end_index); // calculating the heuristic weight of the start node
+
+	Vector<aStarNode*> searchQueue(numberOfNodes); // creating a search queue (this is actually a vector because it needs to sort the items inside it)
+	searchQueue << nodes[start_index];             // setting the first in the queue as the start node
+
+	// matrix to access the "neighbors" of a node
+	Point sides[9] = {
+		{-1,  0}, // up 
+		{ 0, -1}, // left
+		{ 0,  1}, // right
+		{ 1,  0}, // down
+		{-1, -1}, // top left
+		{ 1, -1}, // top right
+		{-1,  1}, // bottom left
+		{ 1,  1}  // bottom right
+	};
+	char c[4] = {
+		'^', '<', '>', 'v'
+	};
+	int n = 4 + (5 * diagonal); // if diagonal is true n will be 9
+
+	while (!searchQueue.is_empty()) // while the queue is not empty
+	{
+		searchQueue.sort(aStarNode_sort);                     // sorts the queue backwards (the last item is has the best combined heuristic)
+		int currentNodeIndex = searchQueue.pop_back()->index; // gets the optimal node to visit next
+		aStarNode* currentNode = nodes[currentNodeIndex];     // sets the current node
+		int current_x = currentNodeIndex / width;
+		int current_y = currentNodeIndex % width;
+
+		printf("=====\nCurrent Node[%d][%d]\n", current_x, current_y);
+		printNode(currentNode);
+
+		if (currentNodeIndex == end_index) // if we reached the end
+			break; // breaks the loop
+
+		for (int i = 0; i < n; i++) // for each possible edge
+		{
+			int x = current_x + sides[i].x; // calculating x of the neighbour node
+			int y = current_y + sides[i].y; // calculating y of the neighbour node
+
+			if (x >= 0 && x < height &&
+				y >= 0 && y < width) // if neighbour is not out of range
+			{
+				int neighbour_index = x * width + y;
+				int edgeWeight = graph->at(x)->at(y); // gets the distance from current node to the [i] node | if 0 then current node is not connected to the [i] node
+				
+				if (edgeWeight > 0 && color[neighbour_index] < 2) // if the node is connected to the [i] node AND the [i] node have not been fully visited
+				{
+					printf("Acessing Node[%d][%d] (%c)\n", x, y, c[i]);
+					printNode(nodes[neighbour_index]);
+
+					aStarNode* connectedNode = nodes[neighbour_index]; // sets the connected node
+					int newDist = edgeWeight + currentNode->dist;
+
+					if (connectedNode->dist == -1 || newDist < connectedNode->dist) // if the i connected node dist is infinity OR this new path is more efficient
+					{
+						printf("	new dist: %d\n", newDist);
+						connectedNode->dist = newDist;          // sets the distance of the connected node to the origin as the new path's distance
+						connectedNode->prev_node = currentNode; // sets the he previous node of the connected node as the current node
+
+						if (connectedNode->heur_weight == -1)   // if the connected mode's heristic weight have not been calculated yet
+							connectedNode->heur_weight = heuristicFunction(graph, i, end_index);
+
+						if (color[neighbour_index] == 0) // if connected node is not in the queue AND have not been fully visited
+						{
+							searchQueue << connectedNode; // pushes it to the search queue
+							color[neighbour_index] = 1; // setting node as "on queue"
+						}
+					}
+				}
+			}
+		}
+
+		color[currentNodeIndex] = 2; // setting node as visited
+	}
+
+	//drawMaze(graph);
+
+	color.print();
+
+	if (nodes[end_index]->prev_node != nullptr) // if there is a path back to the origin
+	{
+		aStarNode* n = nodes[end_index];
+		cout << "Path: ";
+		while (n != nullptr)
+		{
+			int x = n->index / width;
+			int y = n->index  % width;
+			printf("([%d][%d])\n", x, y);
+			n = n->prev_node;
+		}
+		cout << endl;
+	}
+
+	return nodes[end_index]->dist;
+}
 
 /* http://graphonline.ru/en/?graph=GmbvtXYFNUeJLSPQ
 0 1 3 0 6 0 0 4 6

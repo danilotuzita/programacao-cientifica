@@ -176,7 +176,7 @@ void tests()
 	sort_test();
 }
 
-void bfs_dfs()
+void bfs()
 {
 	bool debug = true;
 	
@@ -186,8 +186,8 @@ void bfs_dfs()
 	while (_continue)
 	{
 		int s, e;
-		s = input_node(graph->size(), "Starting");
-		e = input_node(graph->size(), "End");
+		s = input_node(graph->size(), "Starting node: ");
+		e = input_node(graph->size(), "End node: ");
 
 		cout << " ===== BFS ALGORITHM =====\n";
 		clock_t tStartBFS = clock();
@@ -196,11 +196,33 @@ void bfs_dfs()
 		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceBFS << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaBFS, ((float)deltaBFS) / CLOCKS_PER_SEC);
 
+		pause;
+		cout << "Try another node? ";
+		cin >> _continue;
+	}
+
+	delete graph;
+}
+
+void dfs()
+{
+	bool debug = false;
+	cout << "Generating adjaceny matrix here: \n";
+	auto graph = input_maze();
+	bool _continue = true;
+	while (_continue)
+	{
+		Point s, e;
+		s.x = input_node(graph->size(), "Starting X: ");
+		s.y = input_node(graph->size(), "Starting Y: ");
+		e.x = input_node(graph->size(), "End X:");
+		e.y = input_node(graph->size(), "End Y:");
+
 		cout << " ===== DFS ALGORITHM =====\n";
 		clock_t tStartDFS = clock();
-		auto distanceDFS = dfs_shortest_path(*graph, s, e, debug);
+		auto distanceDFS = dfs_maze(graph, s, false, debug);
 		clock_t deltaDFS = clock() - tStartDFS;
-		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceDFS << endl;
+		cout << "The distance of the node [" << s.x << ", "<< s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << (*(*distanceDFS)[e.x])[e.y] << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaDFS, ((float)deltaDFS) / CLOCKS_PER_SEC);
 
 		pause;
@@ -209,6 +231,7 @@ void bfs_dfs()
 	}
 
 	delete graph;
+
 }
 
 void a_star()
@@ -223,8 +246,8 @@ void a_star()
 	while (_continue)
 	{
 		int s, e;
-		s = input_node(graph->size(), "Starting");
-		e = input_node(graph->size(), "End");
+		s = input_node(graph->size(), "Starting node: ");
+		e = input_node(graph->size(), "End node: ");
 
 		cout << " ===== DJIKSTRA ALGORITHM =====\n";
 		clock_t tStartD = clock();
@@ -247,12 +270,53 @@ void a_star()
 	}
 }
 
+void a_star_maze()
+{
+	//auto graph = generate_adjmatrix(9, 0.5, false, 10);
+
+	cout << "Paste your adjaceny matrix here: \n";
+	auto graph = input_maze();
+	//auto graph = generate_adjmatrix_from_maze();
+
+	bool _continue = true;
+	while (_continue)
+	{
+		Point s, e;
+		s.x = input_node(graph->size(), "Starting X: ");
+		s.y = input_node(graph->size(), "Starting Y: ");
+		e.x = input_node(graph->size(), "End X:");
+		e.y = input_node(graph->size(), "End Y:");
+
+		cout << " ===== DJIKSTRA ALGORITHM =====\n";
+		clock_t tStartD = clock();
+		auto dj = aStarMaze(graph, s, e, false, dijkstra);
+		clock_t deltaD = clock() - tStartD;
+		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", deltaD, ((float)deltaD) / CLOCKS_PER_SEC);
+
+		/*
+		cout << " ===== A* ALGORITHM =====\n";
+		clock_t tStartA = clock();
+		auto d = aStarMaze(graph, s, e, false, simpleHeuristic);
+		clock_t deltaA = clock() - tStartA;
+		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", deltaA, ((float)deltaA) / CLOCKS_PER_SEC);
+		*/
+
+		pause;
+		cout << "Try another node? ";
+		cin >> _continue;
+	}
+}
+
 int main()
 {
 	//tests();
 
-	//bfs_dfs();
-	a_star();
+	//bfs();
+	//dfs();
+	//a_star();
+	a_star_maze();
 	//auto g = generate_adjmatrix_from_maze();
 	
 	pause;
