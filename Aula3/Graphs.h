@@ -39,7 +39,12 @@ Vector<int> dfs_distances(Vector< Vector<int>* > graph, int start, bool debug = 
 Vector< Vector<int>* >* dfs_maze(Vector< Vector<int>* >* graph, Point start, bool diagonal, bool debug);
 
 // A*
-float simpleHeuristic(Vector< Vector<int>* >* g, const int node, const int goal);
-float dijkstra(Vector< Vector<int>* >* g, const int node, const int goal);
-int aStar(Vector< Vector<int>* >* graph, int start, int end, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal));
-int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagonal, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal));
+// heuristics
+	float simpleHeuristic(Vector< Vector<int>* >* g, const int node, const int goal);
+	float mazeHeuristic(Vector< Vector<int>* >* g, const int node, const int goal);
+	float dijkstra(Vector< Vector<int>* >* g, const int node, const int goal);
+// algorithms
+	// graph must be a adjency matrix
+	int aStar(Vector< Vector<int>* >* graph, int start, int end, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal));
+	// graph must be a maze
+	int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagonal, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal), bool debug=false);

@@ -294,15 +294,13 @@ void a_star_maze()
 		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaD, ((float)deltaD) / CLOCKS_PER_SEC);
 
-		/*
 		cout << " ===== A* ALGORITHM =====\n";
 		clock_t tStartA = clock();
-		auto d = aStarMaze(graph, s, e, false, simpleHeuristic);
+		auto d = aStarMaze(graph, s, e, false, mazeHeuristic);
 		clock_t deltaA = clock() - tStartA;
 		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaA, ((float)deltaA) / CLOCKS_PER_SEC);
-		*/
-
+		
 		pause;
 		cout << "Try another node? ";
 		cin >> _continue;

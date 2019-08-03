@@ -1,4 +1,11 @@
 #include "Graphs.h"
+#include <math.h>
+
+void cls()
+{
+	for (int n = 0; n < 10; n++)
+		printf("\n\n\n\n\n\n\n\n\n\n");
+}
 
 // GRAPHS UTIL
 // graph generator
@@ -506,29 +513,42 @@ int aStar(Vector< Vector<int>* >* graph, int start, int end, float (*heuristicFu
 	return nodes[end]->dist;
 }
 
-void drawMaze(Vector< Vector<int>* >* board)
+void drawMaze(Vector< Vector<char>* >* board)
 {
-	system("CLS");
-
 	int height = board->size();
 	for (int y = 0; y < height; y++)
 	{
-		Vector<int>* line = (*board)[y];
+		Vector<char>* line = (*board)[y];
 		int height = line->size();
 		for (int x = 0; x < height; x++)
 		{
-			printf("%d ", (*line)[x]);
+			printf("%c ", (*line)[x]);
 		}
 		printf("\n");
 	}
 }
 
-int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagonal, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal))
+float mazeHeuristic(Vector< Vector<int>* >* g, const int node, const int goal)
+{
+	int height = g->size();        // height of the maze
+	int width = (*(*g)[0]).size(); // width of the maze
+	int node_x = node / width;     // calculating x of current node
+	int node_y = node % width;     // calculating y of current node
+	int goal_x = goal / width;     // calculating x of goal node
+	int goal_y = goal % width;     // calculating y of goal node
+
+	int delta_x = node_x - goal_x;
+	int delta_y = node_y - goal_y;
+	
+	return sqrtf(pow(delta_x, 2) + pow(delta_y, 2));
+}
+
+int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagonal, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal), bool debug)
 {
 	int height = graph->size();        // height of the maze
 	int width = (*(*graph)[0]).size(); // width of the maze
 
-	int numberOfNodes = height * width;
+	int numberOfNodes = height * width; // calculating number of nodes
 
 	// creating varibales
 	Vector<aStarNode*> nodes(numberOfNodes); // node vector  | stores info about each node
@@ -539,8 +559,8 @@ int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagon
 	for (int i = 0; i < numberOfNodes; i++)
 		nodes << new aStarNode{ /*index = */ i }; // creating a list of aStarNodes
 
-	int start_index = start.x * width + start.y;
-	int end_index = end.x * width + end.y;
+	int start_index = start.x * width + start.y; // calculating index of start node
+	int end_index = end.x * width + end.y;		 // calculating index of end node
 
 	nodes[start_index]->dist = 0;                                                       // setting the distance from the origin (start node) of the start node as 0
 	nodes[start_index]->heur_weight = heuristicFunction(graph, start_index, end_index); // calculating the heuristic weight of the start node
@@ -555,25 +575,33 @@ int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagon
 		{ 0,  1}, // right
 		{ 1,  0}, // down
 		{-1, -1}, // top left
-		{ 1, -1}, // top right
-		{-1,  1}, // bottom left
+		{-1,  1}, // top right
+		{ 1, -1}, // bottom left
 		{ 1,  1}  // bottom right
-	};
-	char c[4] = {
-		'^', '<', '>', 'v'
 	};
 	int n = 4 + (5 * diagonal); // if diagonal is true n will be 9
 
+	// debug purposes
+	char c[4] = {
+		'^', '<', '>', 'v'
+	};
+
+	int count = 0;
+
 	while (!searchQueue.is_empty()) // while the queue is not empty
 	{
+		count++;
 		searchQueue.sort(aStarNode_sort);                     // sorts the queue backwards (the last item is has the best combined heuristic)
 		int currentNodeIndex = searchQueue.pop_back()->index; // gets the optimal node to visit next
 		aStarNode* currentNode = nodes[currentNodeIndex];     // sets the current node
-		int current_x = currentNodeIndex / width;
-		int current_y = currentNodeIndex % width;
+		int current_x = currentNodeIndex / width;             // calculating x of current node
+		int current_y = currentNodeIndex % width;             // calculating y of current node
 
-		printf("=====\nCurrent Node[%d][%d]\n", current_x, current_y);
-		printNode(currentNode);
+		if (debug)
+		{
+			printf("=====\nCurrent Node[%d][%d]\n", current_x, current_y);
+			printNode(currentNode);
+		}
 
 		if (currentNodeIndex == end_index) // if we reached the end
 			break; // breaks the loop
@@ -586,25 +614,29 @@ int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagon
 			if (x >= 0 && x < height &&
 				y >= 0 && y < width) // if neighbour is not out of range
 			{
-				int neighbour_index = x * width + y;
+				int neighbour_index = x * width + y; // calculating index of the neighbour node
 				int edgeWeight = graph->at(x)->at(y); // gets the distance from current node to the [i] node | if 0 then current node is not connected to the [i] node
 				
 				if (edgeWeight > 0 && color[neighbour_index] < 2) // if the node is connected to the [i] node AND the [i] node have not been fully visited
 				{
-					printf("Acessing Node[%d][%d] (%c)\n", x, y, c[i]);
-					printNode(nodes[neighbour_index]);
+					if (debug)
+					{
+						printf("Acessing Node[%d][%d] (%c)\n", x, y, c[i]);
+						printNode(nodes[neighbour_index]);
+					}
 
 					aStarNode* connectedNode = nodes[neighbour_index]; // sets the connected node
-					int newDist = edgeWeight + currentNode->dist;
+					int newDist = edgeWeight + currentNode->dist; // calculating distance of the current node and the neighbour
 
-					if (connectedNode->dist == -1 || newDist < connectedNode->dist) // if the i connected node dist is infinity OR this new path is more efficient
+					if (connectedNode->dist == -1 || newDist < connectedNode->dist) // if the neighbour node dist is infinity OR this new path is more efficient
 					{
-						printf("	new dist: %d\n", newDist);
+						if(debug) printf("\tnew dist: %d\n", newDist);
+
 						connectedNode->dist = newDist;          // sets the distance of the connected node to the origin as the new path's distance
 						connectedNode->prev_node = currentNode; // sets the he previous node of the connected node as the current node
 
 						if (connectedNode->heur_weight == -1)   // if the connected mode's heristic weight have not been calculated yet
-							connectedNode->heur_weight = heuristicFunction(graph, i, end_index);
+							connectedNode->heur_weight = heuristicFunction(graph, neighbour_index, end_index);
 
 						if (color[neighbour_index] == 0) // if connected node is not in the queue AND have not been fully visited
 						{
@@ -619,25 +651,58 @@ int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagon
 		color[currentNodeIndex] = 2; // setting node as visited
 	}
 
-	//drawMaze(graph);
+	// preparing to draw the maze
+	auto maze = new Vector< Vector<char>* >();
+	char wall_clr[2] = { 219, ' ' };
+	char path_clr[3] = { ' ', 'x', '.' };
 
-	color.print();
+	for (int i = 0; i < height; i++) // setting the maze's walls
+	{
+		*maze << new Vector<char>();
+		for (int j = 0; j < width; j++)
+			*maze->end() << wall_clr[(*(*graph)[i])[j]];
+	}
+	
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++)
+		{
+			int a = color[i * height + j]; // getting the color of the node
+			if (a) // if the color of the node is not 0
+				(*(*maze)[i])[j] = path_clr[a]; // sets its color
+		}
 
+	Stack<aStarNode*> path; // path Stack | saves the path to print it
 	if (nodes[end_index]->prev_node != nullptr) // if there is a path back to the origin
 	{
 		aStarNode* n = nodes[end_index];
-		cout << "Path: ";
 		while (n != nullptr)
 		{
-			int x = n->index / width;
-			int y = n->index  % width;
-			printf("([%d][%d])\n", x, y);
+			path << n;
 			n = n->prev_node;
 		}
-		cout << endl;
+
+		cout << "Path: ";
 	}
 
-	return nodes[end_index]->dist;
+	while (!path.isEmpty())
+	{
+		aStarNode* n = path.pop();
+		int x = n->index / width;
+		int y = n->index  % width;
+		(*(*maze)[x])[y] = '*';
+		printf("([%d][%d]), ", x, y);
+	}
+	printf("\n");
+
+	(*(*maze)[start.x])[start.y] = 'S'; // setting the start node as 'S'
+	(*(*maze)[end.x])[end.y] = 'E';     // setting the end node as 'E'
+
+	drawMaze(maze); // drawing the maze
+	delete maze; // deleting the maze pointer
+
+	cout << "\nThis algorithm iterated through: " << count << " nodes\n";
+
+	return nodes[end_index]->dist; // returns the distance of the end node to the starting node
 }
 
 /* http://graphonline.ru/en/?graph=GmbvtXYFNUeJLSPQ
@@ -652,13 +717,50 @@ int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagon
 6 8 1 2 0 0 4 0 0
 */
 
-/*
-0 1 0 0 0 0 0 0
-1 0 1 0 0 5 0 0
-0 1 0 1 0 0 0 0
-0 0 1 0 1 0 0 0
-0 0 0 1 0 0 0 0
-0 5 0 0 0 0 5 0
-0 0 0 0 0 5 0 5
-0 0 0 0 0 0 5 0
+/* TESTE 1 PARA O A*
+0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0
+0 1 0 0 0 0 0 0 0 1 0 0 0 1 0 1 0 0 0 1 0
+0 1 1 1 0 1 0 1 0 1 1 1 1 1 0 1 0 1 1 1 0
+0 0 0 1 0 1 0 1 0 1 0 0 0 0 0 1 0 0 0 1 0
+0 1 0 1 0 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 0
+0 1 0 0 0 1 0 1 0 1 0 0 0 0 0 1 0 0 0 1 0
+0 1 1 1 1 1 0 1 0 1 0 1 1 1 1 1 1 1 0 1 0
+0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 1 0 1 0 0 0
+0 1 1 1 0 1 1 1 0 1 1 1 0 1 1 1 0 1 1 1 0
+0 0 0 1 0 0 0 1 0 0 0 1 0 1 0 0 0 1 0 0 0
+0 1 1 1 1 1 1 1 0 1 1 1 0 1 1 1 0 1 0 1 0
+0 1 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 1 0 1 0
+0 1 1 1 0 1 0 1 1 1 0 1 0 1 0 1 0 1 1 1 0
+0 1 0 1 0 1 0 0 0 1 0 1 0 1 0 0 0 1 0 1 0
+0 1 0 1 0 1 1 1 1 1 1 1 0 1 1 1 0 1 0 1 0
+0 0 0 1 0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0
+0 1 0 1 1 1 0 1 0 1 0 1 1 1 0 1 1 1 0 1 0
+0 1 0 1 0 0 0 1 0 1 0 0 0 1 0 1 0 0 0 1 0
+0 1 1 1 0 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0
+
+0
+1
+20
+19
+*/
+
+/* TESTE 2 PARA O A*
+0 1 0 1 1 1 0 0 0 0 0
+0 1 1 1 0 1 1 1 1 1 0
+0 0 0 1 0 1 0 0 0 1 0
+0 1 1 1 0 1 0 1 0 1 0
+0 1 0 5 0 1 0 1 0 1 0
+0 1 1 1 1 1 0 1 1 1 0
+0 1 0 0 0 1 0 0 0 1 0
+0 1 0 1 0 1 1 1 0 1 0
+0 0 0 1 0 0 0 1 0 1 0
+0 1 1 1 1 1 1 1 1 1 0
+0 0 0 0 0 0 0 0 0 1 0
+
+0
+1
+10
+9
 */
