@@ -1,28 +1,29 @@
 #pragma once
 
-#include <string>;
+#include <string>
 
 template <class T>
 class Item
 {
-	private:
-		T value;
-		Item* previous;
+private:
+	T value;
+	Item* previous;
 
-	public:
-		Item();
-		~Item();
+public:
+	Item();
+	~Item();
 
-		T getValue() const;
-		Item *getPrevious() const;
+	T getValue() const;
+	Item *getPrevious() const;
 
-		void setValue(T value);
-		void setPrevious(Item *previous);
+	void setValue(T value);
+	void setPrevious(Item *previous);
 };
 
 template < class T >
 Item<T>::Item()
 {
+	value = T();
 	previous = nullptr;
 }
 

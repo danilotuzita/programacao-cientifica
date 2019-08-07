@@ -1,9 +1,68 @@
 #include "Graphs.h"
-
+#include "Render.h"
 #define pause system("PAUSE")
 
 using namespace std;
 // == unitary test functions == //
+void rend()
+{
+	Render r("a", 500, 500, 10, 50, 50);
+	auto cities = random_points(10, 500, 500);
+	auto dist = distances(cities);
+
+	for (int i = 0; i < cities->size(); i++)
+	{
+		int x = cities->at(i).x;
+		int y = cities->at(i).y;
+		r.point(x, y, 2, to_string(i) + " (" + to_string(x) + ", " + to_string(y) + ")");
+	}
+
+	r.open_html();
+	delete cities;
+}
+
+void resize()
+{
+	Vector<int> v(15, 0);
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v.reserve(2);
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v.reserve(20);
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v.resize(5, 2222);
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v.resize(15, 1111);
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v.resize(5);
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v << 3333;
+	v.print_size();
+	v.print();
+	printf("\n");
+
+	v.resize(7);
+	v.print_size();
+	v.print();
+	printf("\n");
+}
 
 void _operator()
 {
@@ -132,7 +191,7 @@ void sort_test()
 	Vector<float> f(10);
 
 	for (int i = 10; i > 0; i--)
-		f.push_back(i * 1.08);
+		f.push_back(i * 1.08f);
 
 	f.print();
 	f.sort();
@@ -164,6 +223,8 @@ void sort_test()
 // UNITARY TESTS
 void tests()
 {
+	resize();
+	
 	vector_vector();
 	_operator();
 
@@ -272,12 +333,9 @@ void a_star()
 
 void a_star_maze()
 {
-	//auto graph = generate_adjmatrix(9, 0.5, false, 10);
-
 	cout << "Paste your adjaceny matrix here: \n";
 	auto graph = input_maze();
-	//auto graph = generate_adjmatrix_from_maze();
-
+	
 	bool _continue = true;
 	while (_continue)
 	{
@@ -307,16 +365,30 @@ void a_star_maze()
 	}
 }
 
+void hill_climbing()
+{
+	auto cities = random_points(10, 500, 500);
+	hillClimbing(cities, 500, 500);
+	delete cities;
+}
+
 int main()
 {
+	/*while (true)
+	{
+		rend();
+		pause;
+	}*/
 	//tests();
 
 	//bfs();
 	//dfs();
 	//a_star();
-	a_star_maze();
+	//a_star_maze();
 	//auto g = generate_adjmatrix_from_maze();
 	
+	hill_climbing();
+
 	pause;
 	return 0;
 }

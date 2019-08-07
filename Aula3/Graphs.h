@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <stdlib.h>
+#include <time.h>
+#include "Render.h"
 #include <Vector.hpp>
 #include <Queue.hpp>
 #include <Stack.hpp>
@@ -37,6 +40,11 @@ int bfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool deb
 // DFS
 Vector<int> dfs_distances(Vector< Vector<int>* > graph, int start, bool debug = false);
 Vector< Vector<int>* >* dfs_maze(Vector< Vector<int>* >* graph, Point start, bool diagonal, bool debug);
+
+// HILL CLIMBING
+Vector<Point>* random_points(int quantity, int width, int height);
+Vector< Vector<double>* >* distances(Vector<Point>* points);
+double hillClimbing(Vector<Point>* cities, int width, int height);
 
 // A*
 // heuristics

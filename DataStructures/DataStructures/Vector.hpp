@@ -32,6 +32,7 @@ public:
 	// MEMORY UTILS
 	void reserve(int newSize);           // reserves MORE memory for the list
 	void resize(int newSize, T value);   // resizes the vector and fills the new memory spaces with 'value'
+	void resize(int newSize);            // resizes the vector and fills the new memory spaces with an value-initialized
 	void shrink_to_fit();                // resizes the capacity of the vetor to fit its size
 
 	// UTIL
@@ -94,7 +95,7 @@ void Vector<T>::_reserve(int newSize) // Reallocates the list size (Internal-use
 		throw std::bad_array_new_length();
 
 	T* newList = new T[newSize];     // creating a new list that fits the new size
-	for (int i = 0; i < size(); i++) // copying each item from the old list to the new list
+	for (int i = 0; i < newSize && i < size(); i++) // copying each item from the old list to the new list
 		newList[i] = list[i];
 
 	delete[] list;     // deleting the old list from memory
@@ -115,6 +116,14 @@ void Vector<T>::resize(int newSize, T value)
 	_reserve(newSize); // resizing the vector to the new size
 	for (int i = size(); i < newSize; i++) // populating the new 
 		push_back(value);
+	_size = newSize - 1; // making sure the size of the list is newSize
+}
+
+template<class T>
+void Vector<T>::resize(int newSize)
+{
+	_reserve(newSize); // resizing the vector to the new size
+	if (_size >= maxSize) _size = maxSize - 1; // making sure the _size is pointing to the last item
 }
 
 template<class T>

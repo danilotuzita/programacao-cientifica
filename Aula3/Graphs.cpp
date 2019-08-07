@@ -385,6 +385,125 @@ Vector< Vector<int>* >* dfs_maze(Vector< Vector<int>* >* graph, Point start, boo
 	return dist; // returning dist vector
 }
 
+// ====== HILL ====== //
+Vector<Point>* random_points(int quantity, int width, int height)
+{
+	srand(time(NULL));
+
+	auto r = new Vector<Point>();
+	for (int i = 0; i < quantity; i++)
+		*r << Point{ rand() % width, rand() % height };
+
+	return r;
+}
+
+Vector< Vector<double>* >* distances(Vector<Point>* points)
+{
+	int n = points->size();
+	auto dist = new Vector< Vector<double>* >(n);
+	for (int i = 0; i < n; i++)
+		*dist << new Vector<double>(n, 0);
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = i + 1; j < n; j++)
+		{
+			double delta_x = points->at(i).x - points->at(j).x;
+			double delta_y = points->at(i).y - points->at(j).y;
+
+			double ans = sqrt(pow(delta_x, 2.) + pow(delta_y, 2.));
+			(*(*dist)[i])[j] = ans;
+			(*(*dist)[j])[i] = ans;
+		}
+	}
+
+	return dist;
+}
+
+Vector<int> generate_route(int numberOfCities)
+{
+	Vector<int> v;
+	numberOfCities--;
+	for (int i = 0; i < numberOfCities; i++)
+		v << i + 1;
+
+	for (int i = 0; i < numberOfCities - 1; i++)
+	{
+		int j = i + rand() % (numberOfCities - i);
+		int temp = v[i];
+		v[i] = v[j];
+		v[j] = temp;
+	}
+
+	v.shrink_to_fit();
+	v.simple_print();
+	return v;
+}
+
+double hillClimbing(Vector<Point>* cities, int width, int height)
+{
+	Render r("hillClimbing", width, height, 12, 50, 50);
+	int numberOfCities = cities->size();
+	auto dist = distances(cities);
+	// TODO: vvv CORRIGIR PQ EU NÃO POSSO COPIAR NO CONSTRUTOR vvv
+	// auto tour = generate_route(numberOfCities);
+	Vector<int> tour;
+	tour = generate_route(numberOfCities);
+
+	double tourDist = 0;
+	int prev = 0;
+	
+	for (int i = 0; i < numberOfCities - 1; i++)
+	{
+		int index = tour[i];
+		double roadDist = (*(*dist)[prev])[index];
+		if (roadDist <= 0) break; // Não tem como chegar nessa cidade (futuro)
+		tourDist += roadDist;
+		printf("Traveling from [%d] to [%d]: %10lf\n", prev, index, roadDist);
+
+		prev = index;
+	}
+
+	double roadDist = (*(*dist)[prev])[0];
+	tourDist += roadDist;
+	printf("Traveling from [%d] to [%d]: %10lf\n", prev, 0, roadDist);
+	printf("Total travel distance: %lf\n", tourDist);
+
+
+	int lx = cities->at(0).x;
+	int ly = cities->at(0).y;
+
+	for (int i = 0; i < numberOfCities; i++)
+	{
+		int x, y;
+
+		if (i == 0)
+		{
+			int index = 0;
+			x = cities->at(index).x;
+			y = cities->at(index).y;
+			r.point(x, y, 2, to_string(index) + " (" + to_string(x) + ", " + to_string(y) + ")");
+		}
+		else
+		{
+			int index = tour[i - 1];
+			x = cities->at(index).x;
+			y = cities->at(index).y;
+			r.point(x, y, 2, to_string(index) + " (" + to_string(x) + ", " + to_string(y) + ")");
+			r.line(x, y, lx, ly);
+		}		
+		
+		lx = x; ly = y;
+	}
+
+	r.line(cities->at(0).x, cities->at(0).y, lx, ly);
+
+	r.open_html();
+
+	delete dist;
+	return 0;
+}
+
 // ====== A* ====== //
 void printNode(aStarNode* node)
 {
@@ -531,7 +650,7 @@ void drawMaze(Vector< Vector<char>* >* board)
 float mazeHeuristic(Vector< Vector<int>* >* g, const int node, const int goal)
 {
 	int height = g->size();        // height of the maze
-	int width = (*(*g)[0]).size(); // width of the maze
+	int width = (*g)[0]->size();   // width of the maze
 	int node_x = node / width;     // calculating x of current node
 	int node_y = node % width;     // calculating y of current node
 	int goal_x = goal / width;     // calculating x of goal node
@@ -540,7 +659,7 @@ float mazeHeuristic(Vector< Vector<int>* >* g, const int node, const int goal)
 	int delta_x = node_x - goal_x;
 	int delta_y = node_y - goal_y;
 	
-	return sqrtf(pow(delta_x, 2) + pow(delta_y, 2));
+	return sqrtf(powf((float)delta_x, 2.f) + powf((float)delta_y, 2.f));
 }
 
 int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagonal, float(*heuristicFunction)(Vector< Vector<int>* >* g, const int node, const int goal), bool debug)
@@ -653,7 +772,7 @@ int aStarMaze(Vector< Vector<int>* >* graph, Point start, Point end, bool diagon
 
 	// preparing to draw the maze
 	auto maze = new Vector< Vector<char>* >();
-	char wall_clr[2] = { 219, ' ' };
+	char wall_clr[2] = { (char)219, ' ' };
 	char path_clr[3] = { ' ', 'x', '.' };
 
 	for (int i = 0; i < height; i++) // setting the maze's walls
