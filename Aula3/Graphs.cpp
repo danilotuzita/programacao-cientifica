@@ -7,6 +7,9 @@ void cls()
 		printf("\n\n\n\n\n\n\n\n\n\n");
 }
 
+bool minimize(double a, double b) { return a < b; }
+bool maximize(double a, double b) { return a > b; }
+
 // GRAPHS UTIL
 // graph generator
 Vector< Vector<int>* >* generate_adjmatrix(int nodeCount, double chance, bool directional, int max_weight)
@@ -234,7 +237,7 @@ int input_node(int size, string prefix)
 // ====== BFS ====== //
 
 // Returns a distance vector
-Vector<int> bfs_distances(Vector< Vector<int>* > graph, int start, bool debug) // graph must be adjacency matrix
+Vector<int> bfsDistances(Vector< Vector<int>* > graph, int start, bool debug) // graph must be adjacency matrix
 {
 	// creating varibales
 	Vector<int> dist(graph.size(), -1);      // distance vector | stores the distance to reach each node from starting node | dist = -1: cannot reach from starting node
@@ -270,16 +273,16 @@ Vector<int> bfs_distances(Vector< Vector<int>* > graph, int start, bool debug) /
 }
 
 // Returns the shortest path
-int bfs_shortest_path(Vector< Vector<int>* > graph, int start, int end, bool debug) // graph must be adjacency matrix
+int bfsShortestPath(Vector< Vector<int>* > graph, int start, int end, bool debug) // graph must be adjacency matrix
 {
 	Vector<int> dist;
-	dist = bfs_distances(graph, start, debug);
+	dist = bfsDistances(graph, start, debug);
 	return dist[end];
 }
 
 // ====== DFS ====== //
 
-Vector<int> dfs_distances(Vector< Vector<int>* > graph, int start, bool debug) // graph must be adjacency matrix
+Vector<int> dfsDistances(Vector< Vector<int>* > graph, int start, bool debug) // graph must be adjacency matrix
 {
 	// creating varibales
 	Vector<int> dist(graph.size(), -1);      // distance vector | stores the distance to reach each node from starting node | dist = -1: cannot reach from starting node
@@ -314,7 +317,7 @@ Vector<int> dfs_distances(Vector< Vector<int>* > graph, int start, bool debug) /
 	return dist; // returning dist vector
 }
 
-Vector< Vector<int>* >* dfs_maze(Vector< Vector<int>* >* graph, Point start, bool diagonal, bool debug) // graph must be adjacency matrix
+Vector< Vector<int>* >* dfsMaze(Vector< Vector<int>* >* graph, Point start, bool diagonal, bool debug) // graph must be adjacency matrix
 {
 	int height = graph->size();        // height of the maze
 	int width = (*(*graph)[0]).size(); // width of the maze
@@ -386,9 +389,49 @@ Vector< Vector<int>* >* dfs_maze(Vector< Vector<int>* >* graph, Point start, boo
 }
 
 // ====== HILL ====== //
-Vector<Point>* random_points(int quantity, int width, int height)
+void showRoute(Render* r, Vector<Point>* cities, Vector<int>* tour, int width, int height, double bestScore, int iter)
 {
-	srand(time(NULL));
+	int numberOfCities = tour->size();
+	int lx, ly; // previous city coordinates
+
+	for (int i = 0; i < numberOfCities; i++) // for each city in the route
+	{
+		int index = (*tour)[i]; // gets the current city index
+		int x = cities->at(index).x; // gets the current city x
+		int y = cities->at(index).y; // gets the current city y
+
+		r->point(x, y, 2, to_string(index) + " (" + to_string(x) + ", " + to_string(y) + ")"); // drawing the city
+		if (i > 0) // if its not the first iteration
+			r->line(x, y, lx, ly); // draws a line between the current city and the previous city
+		lx = x; ly = y; // sets the current city coordinates as the previous city coordinates
+	}
+
+	r->line(cities->at((*tour)[0]).x, cities->at((*tour)[0]).y, lx, ly); // drawing a line between the last city and the starting city
+	r->text(10, 10, "Tour " + to_string(iter) + " Distance: " + to_string(bestScore)); // writing the Tour distance
+	r->newMap();
+}
+
+// Swap cities operator
+Vector< Vector<int>* >* swapCities(Vector<int>* route)
+{
+	auto newRoutes = new Vector<Vector<int>*>; // creating a vector of vector to store all possible generated routes
+	int numberOfCities = route->size();
+
+	for (int i = 1; i < numberOfCities; i++) // for each index in the route
+		for (int j = i + 1; j < numberOfCities; j++) // for each next item
+		{
+			*newRoutes << new Vector<int>(*route); // creates a new route
+			newRoutes->end()->set_at(i, route->at(j)); // swaps a city
+			newRoutes->end()->set_at(j, route->at(i)); // swaps a city
+		}
+
+	return newRoutes;
+} // NOTE: this operator is awful, but it does the trick to validate the hill climbing algorithm
+
+// Generates random cities
+Vector<Point>* randomPoints(int quantity, int width, int height)
+{
+	srand(clock());
 
 	auto r = new Vector<Point>();
 	for (int i = 0; i < quantity; i++)
@@ -397,6 +440,7 @@ Vector<Point>* random_points(int quantity, int width, int height)
 	return r;
 }
 
+// Calculates the distance between cities
 Vector< Vector<double>* >* distances(Vector<Point>* points)
 {
 	int n = points->size();
@@ -408,100 +452,157 @@ Vector< Vector<double>* >* distances(Vector<Point>* points)
 	{
 		for (int j = i + 1; j < n; j++)
 		{
-			double delta_x = points->at(i).x - points->at(j).x;
-			double delta_y = points->at(i).y - points->at(j).y;
+			double delta_x = points->at(i).x - points->at(j).x;	// Calculating the delta x
+			double delta_y = points->at(i).y - points->at(j).y; // Calculating the delta y
 
-			double ans = sqrt(pow(delta_x, 2.) + pow(delta_y, 2.));
-			(*(*dist)[i])[j] = ans;
-			(*(*dist)[j])[i] = ans;
+			double ans = sqrt(pow(delta_x, 2.) + pow(delta_y, 2.)); // Calculating cartesian distance between the two cities
+			(*(*dist)[i])[j] = ans; // setting the distance symmetricaly in the matrix
+			(*(*dist)[j])[i] = ans; // setting the distance symmetricaly in the matrix
 		}
 	}
 
 	return dist;
 }
 
-Vector<int> generate_route(int numberOfCities)
+// Generates a random route
+Vector<int> generateRoute(int numberOfCities, int numberOfShuffles)
 {
 	Vector<int> v;
-	numberOfCities--;
-	for (int i = 0; i < numberOfCities; i++)
-		v << i + 1;
+	for (int i = 0; i < numberOfCities; i++) // creating a route from 0 - numberOfCities [ 0 1 2 3 ... numberOfCities ]
+		v << i;
 
-	for (int i = 0; i < numberOfCities - 1; i++)
+	// shuffling the vector
+	for (int k = 0; k < numberOfShuffles; k++)
 	{
-		int j = i + rand() % (numberOfCities - i);
-		int temp = v[i];
-		v[i] = v[j];
-		v[j] = temp;
-	}
+		srand(clock());
+		for (int i = 1; i < numberOfCities; i++) // for each item swap it with some other random item
+		{
+			int j = rand() % (numberOfCities - 1) + 1; // selecting a random item
+			int temp = v[i];
+			v[i] = v[j];
+			v[j] = temp;
+		}
+	}	
 
-	v.shrink_to_fit();
-	v.simple_print();
+	v.shrink_to_fit(); // shrinking the vector to save memory
 	return v;
 }
 
-double hillClimbing(Vector<Point>* cities, int width, int height)
+// Calculates the route lenght
+double routeLenght(Vector< Vector<double>* >* dist, Vector<int>* route, bool print=false)
 {
-	Render r("hillClimbing", width, height, 12, 50, 50);
-	int numberOfCities = cities->size();
-	auto dist = distances(cities);
-	// TODO: vvv CORRIGIR PQ EU NÃO POSSO COPIAR NO CONSTRUTOR vvv
-	// auto tour = generate_route(numberOfCities);
-	Vector<int> tour;
-	tour = generate_route(numberOfCities);
-
+	// setting up variables
+	int numberOfCities = dist->size();
+	int startingCity = (*route)[0];
 	double tourDist = 0;
-	int prev = 0;
+
+	int prev = startingCity;
+	for (int i = 1; i < numberOfCities; i++) // starting from 1 because the route[0] is the "prev"
+	{
+		int index = (*route)[i]; // storing the current index
+		double roadDist = (*(*dist)[prev])[index]; // getting the distance from the previous city and the current city
+		if (roadDist <= 0) return -1; // Não tem como chegar nessa cidade (futuro)
+		tourDist += roadDist; // adding it to the total dist
+		if(print) printf("Traveling from [%d] to [%d]: %10lf\n", prev, index, roadDist);
+
+		prev = index; // setting the current city as the previous city
+	}
+
+	double roadDist = (*(*dist)[prev])[startingCity]; // getting the distance from the last city of the route to the start city
+	tourDist += roadDist; // adding it to the total dist
+	if (print) printf("Traveling from [%d] to [%d]: %10lf\n", prev, startingCity, roadDist);
+	if (print) printf("Total travel distance: %lf\n", tourDist);
 	
-	for (int i = 0; i < numberOfCities - 1; i++)
+	return tourDist;
+}
+
+// Hill climbing algorithm
+hillClimbSolution hillClimbing(Vector< Vector<double>* >* dist, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter, bool(*eval)(double a, double b), Render* r)
+{
+	int numberOfCities = dist->size();
+	
+	// TODO: vvv CORRIGIR PQ EU NÃO POSSO COPIAR NO CONSTRUTOR vvv (essa maldicao nao vai funcionar)
+	// auto tour = generateRoute(numberOfCities);
+	auto bestTour = new Vector<int>;                // stores the best route it could find
+	*bestTour = generateRoute(numberOfCities);      // generating a random tour	
+	double bestScore = routeLenght(dist, bestTour); // stores the best score of the tour
+	
+
+	// printf("1st Tour(%lf): ", bestScore);
+	// bestTour->simple_print();
+	// showRoute(r, cities, bestTour, width, height, bestScore);
+
+	int iterations = 0;
+	while (iterations < maxIter) // while it can iterate
 	{
-		int index = tour[i];
-		double roadDist = (*(*dist)[prev])[index];
-		if (roadDist <= 0) break; // Não tem como chegar nessa cidade (futuro)
-		tourDist += roadDist;
-		printf("Traveling from [%d] to [%d]: %10lf\n", prev, index, roadDist);
+		auto newTours = op(bestTour); // gets all possible "moves"/"operations" this route can do
+		bool tourChanged = false;
 
-		prev = index;
-	}
-
-	double roadDist = (*(*dist)[prev])[0];
-	tourDist += roadDist;
-	printf("Traveling from [%d] to [%d]: %10lf\n", prev, 0, roadDist);
-	printf("Total travel distance: %lf\n", tourDist);
-
-
-	int lx = cities->at(0).x;
-	int ly = cities->at(0).y;
-
-	for (int i = 0; i < numberOfCities; i++)
-	{
-		int x, y;
-
-		if (i == 0)
+		for (int i = 0; i < newTours->size(); i++) // for each move possible
 		{
-			int index = 0;
-			x = cities->at(index).x;
-			y = cities->at(index).y;
-			r.point(x, y, 2, to_string(index) + " (" + to_string(x) + ", " + to_string(y) + ")");
+			if (iterations >= maxIter) // if it cannot iterate anymore
+				break;
+
+			iterations++;
+			auto currentTour = (*newTours)[i]; // saves the tour as currentTour
+			double currentScore = routeLenght(dist, currentTour); // calculates the score of the tour
+
+			if (eval(currentScore, bestScore)) // if the currentScore is better than the bestScore
+			{
+				tourChanged = true;
+				// stores the tour
+				bestTour = currentTour;
+				bestScore = currentScore;
+
+				// showRoute(r, cities, bestTour, width, height, bestScore);
+				// printf("New Tour(%lf): ", bestScore);
+				// bestTour->simple_print();
+
+				// break;
+			}
 		}
-		else
-		{
-			int index = tour[i - 1];
-			x = cities->at(index).x;
-			y = cities->at(index).y;
-			r.point(x, y, 2, to_string(index) + " (" + to_string(x) + ", " + to_string(y) + ")");
-			r.line(x, y, lx, ly);
-		}		
-		
-		lx = x; ly = y;
+
+		delete newTours; // freeing memory
+
+		if (!tourChanged) // if the tour has not changed we reach a peak
+			break; // no need to search this route anymore
 	}
 
-	r.line(cities->at(0).x, cities->at(0).y, lx, ly);
+	printf("Number of Tests: %d, Distance: %lf\n\n", iterations, bestScore);
+	return { bestScore, iterations, bestTour };
+}
 
-	r.open_html();
+// Calls the hillClimbing until it runs out of iterations
+double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter, bool(*eval)(double a, double b))
+{
+	Render r("hillClimbing", width, height, 12, 50, 50); // creating a renderer
 
-	delete dist;
-	return 0;
+	  auto dist = distances(cities);    // calculating distance matrix
+	  auto bestTour = new Vector<int>;  // stores the best tour found
+	double bestScore = 0;               // stores the score of the best tour
+	
+	int iterations = 0;
+	while (iterations < maxIter) // while it can iterate
+	{
+		int remainingIter = maxIter - iterations; // calculates remaining iteration
+		printf("Remaining: (%d/%d)\n", remainingIter, maxIter);
+		hillClimbSolution sol = hillClimbing(dist, op, width, height, remainingIter, eval, &r); // calls hill climbing
+		
+		if (eval(sol.score, bestScore) || iterations == 0) // if new solution is better or it's the first iteration
+		{
+			bestScore = sol.score; // stores the new score
+			delete bestTour;       // deleting pointer before overwriting
+			bestTour = sol.route;  // stores the new tour
+			showRoute(&r, cities, bestTour, width, height, bestScore, iterations);
+		}
+		else delete sol.route;     // delete the new solution's tour pointer
+
+		iterations += sol.iterations; // computes iterations
+	}
+
+	r.open_html(); // opening the generated html
+	delete bestTour, dist; // deletes the tour and distance matrix
+	return bestScore;
 }
 
 // ====== A* ====== //

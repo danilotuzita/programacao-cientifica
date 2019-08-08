@@ -7,7 +7,7 @@ using namespace std;
 void rend()
 {
 	Render r("a", 500, 500, 10, 50, 50);
-	auto cities = random_points(10, 500, 500);
+	auto cities = randomPoints(10, 500, 500);
 	auto dist = distances(cities);
 
 	for (int i = 0; i < cities->size(); i++)
@@ -252,7 +252,7 @@ void bfs()
 
 		cout << " ===== BFS ALGORITHM =====\n";
 		clock_t tStartBFS = clock();
-		auto distanceBFS = bfs_shortest_path(*graph, s, e, debug);
+		auto distanceBFS = bfsShortestPath(*graph, s, e, debug);
 		clock_t deltaBFS = clock() - tStartBFS;
 		cout << "The distance of the node " << s << " to the node " << e << " is: " << distanceBFS << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaBFS, ((float)deltaBFS) / CLOCKS_PER_SEC);
@@ -281,7 +281,7 @@ void dfs()
 
 		cout << " ===== DFS ALGORITHM =====\n";
 		clock_t tStartDFS = clock();
-		auto distanceDFS = dfs_maze(graph, s, false, debug);
+		auto distanceDFS = dfsMaze(graph, s, false, debug);
 		clock_t deltaDFS = clock() - tStartDFS;
 		cout << "The distance of the node [" << s.x << ", "<< s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << (*(*distanceDFS)[e.x])[e.y] << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaDFS, ((float)deltaDFS) / CLOCKS_PER_SEC);
@@ -367,8 +367,14 @@ void a_star_maze()
 
 void hill_climbing()
 {
-	auto cities = random_points(10, 500, 500);
-	hillClimbing(cities, 500, 500);
+	int numberOfCities = 25;
+	int width = numberOfCities * 30;
+	int height = numberOfCities * 30;
+	int guesses = numberOfCities * 5000;
+
+	auto cities = randomPoints(numberOfCities, width, height);
+	double dist = hillClimbingRestart(cities, swapCities, width, height, guesses);
+	printf("Total distance: %lf\n", dist);
 	delete cities;
 }
 
@@ -386,6 +392,13 @@ int main()
 	//a_star();
 	//a_star_maze();
 	//auto g = generate_adjmatrix_from_maze();
+	/*while (true)
+	{
+		system("CLS");
+		for (int i = 0; i < 50; i++)
+			generateRoute(10).print();
+		pause;
+	}*/
 	
 	hill_climbing();
 
