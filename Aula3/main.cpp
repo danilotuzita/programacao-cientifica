@@ -3,6 +3,21 @@
 #define pause system("PAUSE")
 
 using namespace std;
+
+int input()
+{
+	int f;
+	system("CLS");
+	cout << "SELECT AN ALGORITHM: \n";
+	cout << "[0] - BFS           | INPUT: ADJACENCY MATRIX [AUTO GENERATED] | OUTPUT: MIN DISTANCE BETWEEN 2 VERTICES\n";
+	cout << "[1] - DFS           | INPUT: MAZE                              | OUTPUT: DISTANCE TO EACH VERTEX\n";
+	cout << "[2] - HILL CLIMBING | INPUT: CITIES [AUTO GENERATED]           | OUTPUT: SOLUTION TO TRAVELLING SALESMAN\n";
+	cout << "[3] - A*            | INPUT: MAZE                              | OUTPUT: SOLUTION TO MAZE (DJIKSTRA AND EUCLIDIAN DISTANCE HEURISTIC)\n";
+	cout << "[ANY OTHER] - QUIT\n";
+	cin >> f;
+	return f;
+}
+
 // == unitary test functions == //
 void rend()
 {
@@ -420,27 +435,12 @@ int main()
 
 	fncs functions[] = {bfs, dfs, hill_climbing, a_star_maze};
 	
-	int f = 0;
-	system("CLS");
-	cout << "SELECT AN ALGORITHM: \n";
-	cout << "[0] - BFS\n";
-	cout << "[1] - DFS\n";
-	cout << "[2] - HILL CLIMBING\n";
-	cout << "[3] - A*\n";
-	cout << "[ANY OTHER] - QUIT\n";
-	cin >> f;
+	int f = input();	
 
 	while (f >= 0 && f <= 3)
 	{
 		functions[f]();
-		system("CLS");
-		cout << "SELECT AN ALGORITHM: \n";
-		cout << "[0] - BFS\n";
-		cout << "[1] - DFS\n";
-		cout << "[2] - HILL CLIMBING\n";
-		cout << "[3] - A*\n";
-		cout << "[ANY OTHER] - QUIT\n";
-		cin >> f;
+		f = input();
 	}
 	
 	/*

@@ -70,7 +70,6 @@ double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(V
 
 // A*
 // heuristics
-
 	float simpleHeuristic(Vector< Vector<int>* >* g, const int node, const int goal);
 	float mazeHeuristic(Vector< Vector<int>* >* g, const int node, const int goal);
 	float dijkstra(Vector< Vector<int>* >* g, const int node, const int goal);
