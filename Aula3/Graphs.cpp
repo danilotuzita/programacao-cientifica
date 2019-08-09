@@ -150,8 +150,9 @@ Vector< Vector<int>* >* generate_adjmatrix_from_maze(bool diagonal)
 Vector< Vector<int>* >* input_adjmatrix()
 {
 	auto graph = new Vector< Vector<int>* >();
-	string line;
 
+	string line;
+	cin.ignore();
 	cout << "Press enter 2 times to end graph\n";
 	std::getline(cin, line);
 	while (line != "")
@@ -183,6 +184,7 @@ Vector< Vector<int>* >* input_maze()
 	int width = -1;
 
 	string line;
+	cin.ignore();
 	cout << "Press enter 2 times to end graph\n";
 	std::getline(cin, line);
 	while (line != "") // while did not press enter 2 times
@@ -517,7 +519,7 @@ double routeLenght(Vector< Vector<double>* >* dist, Vector<int>* route, bool pri
 }
 
 // Hill climbing algorithm
-hillClimbSolution hillClimbing(Vector< Vector<double>* >* dist, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter, bool(*eval)(double a, double b), Render* r)
+hillClimbSolution hillClimbing(Vector< Vector<double>* >* dist, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter, bool(*eval)(double a, double b), Render* r, bool debug=false)
 {
 	int numberOfCities = dist->size();
 	
@@ -568,12 +570,12 @@ hillClimbSolution hillClimbing(Vector< Vector<double>* >* dist, Vector< Vector<i
 			break; // no need to search this route anymore
 	}
 
-	printf("Number of Tests: %d, Distance: %lf\n\n", iterations, bestScore);
+	if(debug) printf("Number of Tests: %d, Distance: %lf\n\n", iterations, bestScore);
 	return { bestScore, iterations, bestTour };
 }
 
 // Calls the hillClimbing until it runs out of iterations
-double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter, bool(*eval)(double a, double b))
+double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter, bool(*eval)(double a, double b), bool debug)
 {
 	Render r("hillClimbing", width, height, 12, 50, 50); // creating a renderer
 
@@ -585,8 +587,8 @@ double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(V
 	while (iterations < maxIter) // while it can iterate
 	{
 		int remainingIter = maxIter - iterations; // calculates remaining iteration
-		printf("Remaining: (%d/%d)\n", remainingIter, maxIter);
-		hillClimbSolution sol = hillClimbing(dist, op, width, height, remainingIter, eval, &r); // calls hill climbing
+		if(debug) printf("Remaining: (%d/%d)\n", remainingIter, maxIter);
+		hillClimbSolution sol = hillClimbing(dist, op, width, height, remainingIter, eval, &r, debug); // calls hill climbing
 		
 		if (eval(sol.score, bestScore) || iterations == 0) // if new solution is better or it's the first iteration
 		{

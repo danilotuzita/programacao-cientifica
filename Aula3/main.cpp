@@ -239,18 +239,17 @@ void tests()
 
 void bfs()
 {
-	bool debug = true;
-	
+	cout << " ===== BFS ALGORITHM =====\n";
 	cout << "Generating adjaceny matrix here: \n";
 	auto graph = generate_adjmatrix(15, 0.2);
 	bool _continue = true;
+	bool debug = false;
 	while (_continue)
 	{
 		int s, e;
 		s = input_node(graph->size(), "Starting node: ");
 		e = input_node(graph->size(), "End node: ");
 
-		cout << " ===== BFS ALGORITHM =====\n";
 		clock_t tStartBFS = clock();
 		auto distanceBFS = bfsShortestPath(*graph, s, e, debug);
 		clock_t deltaBFS = clock() - tStartBFS;
@@ -262,15 +261,17 @@ void bfs()
 		cin >> _continue;
 	}
 
+	cout << "\n\n\n\n";
 	delete graph;
 }
 
 void dfs()
 {
-	bool debug = false;
-	cout << "Generating adjaceny matrix here: \n";
+	cout << " ===== DFS ALGORITHM =====\n";
+	cout << "Paste your maze here: \n";
 	auto graph = input_maze();
 	bool _continue = true;
+	bool debug = false;
 	while (_continue)
 	{
 		Point s, e;
@@ -279,26 +280,93 @@ void dfs()
 		e.x = input_node(graph->size(), "End X:");
 		e.y = input_node(graph->size(), "End Y:");
 
-		cout << " ===== DFS ALGORITHM =====\n";
 		clock_t tStartDFS = clock();
 		auto distanceDFS = dfsMaze(graph, s, false, debug);
 		clock_t deltaDFS = clock() - tStartDFS;
 		cout << "The distance of the node [" << s.x << ", "<< s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << (*(*distanceDFS)[e.x])[e.y] << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaDFS, ((float)deltaDFS) / CLOCKS_PER_SEC);
 
+		delete distanceDFS;
 		pause;
 		cout << "Try another node? ";
 		cin >> _continue;
 	}
 
+	cout << "\n\n\n\n";
 	delete graph;
+}
 
+void hill_climbing()
+{
+	cout << " ===== HILL CLIMBING ALGORITHM =====\n";
+	bool _continue = true;
+	bool debug = false;
+	while (_continue)
+	{
+		int numberOfCities;
+		cout << "Insert number of cities to be generated(Recomended 25): ";
+		cin >> numberOfCities;
+
+		int width = numberOfCities * 30;
+		int height = numberOfCities * 30;
+		int guesses = numberOfCities * 5000;
+
+		auto cities = randomPoints(numberOfCities, width, height);
+		double dist = hillClimbingRestart(cities, swapCities, width, height, guesses, minimize, debug);
+		printf("Total distance: %lf\n", dist);
+
+		delete cities;
+		pause;
+		cout << "Try again? ";
+		cin >> _continue;
+	}
+
+	cout << "\n\n\n\n";
+}
+
+void a_star_maze()
+{
+	cout << " ===== A* ALGORITHM =====\n";
+	cout << "Paste your maze here: \n";
+	auto graph = input_maze();
+	
+	bool _continue = true;
+	bool debug = false;
+	while (_continue)
+	{
+		Point s, e;
+		s.x = input_node(graph->size(), "Starting X: ");
+		s.y = input_node(graph->size(), "Starting Y: ");
+		e.x = input_node(graph->size(), "End X:");
+		e.y = input_node(graph->size(), "End Y:");
+
+		cout << " ===== NO HEURISTIC (DJIKSTRA ALGORITHM)\n";
+		clock_t tStartD = clock();
+		auto dj = aStarMaze(graph, s, e, false, dijkstra, debug);
+		clock_t deltaD = clock() - tStartD;
+		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", deltaD, ((float)deltaD) / CLOCKS_PER_SEC);
+
+		cout << " ===== EUCLIDIAN DISTANCE HEURISTIC\n";
+		clock_t tStartA = clock();
+		auto d = aStarMaze(graph, s, e, false, mazeHeuristic, debug);
+		clock_t deltaA = clock() - tStartA;
+		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
+		printf("This algorithm took %d ticks (%f s)\n\n", deltaA, ((float)deltaA) / CLOCKS_PER_SEC);
+		
+		pause;
+		cout << "Try another node? ";
+		cin >> _continue;
+	}
+
+	cout << "\n\n\n\n";
+	delete graph;
 }
 
 void a_star()
 {
 	//auto graph = generate_adjmatrix(9, 0.5, false, 10);
-	
+
 	cout << "Paste your adjaceny matrix here: \n";
 	auto graph = input_adjmatrix();
 	//auto graph = generate_adjmatrix_from_maze();
@@ -324,59 +392,14 @@ void a_star()
 		clock_t deltaA = clock() - tStartA;
 		cout << "The distance of the node " << s << " to the node " << e << " is: " << d << endl;
 		printf("This algorithm took %d ticks (%f s)\n\n", deltaA, ((float)deltaA) / CLOCKS_PER_SEC);
-		
+
 		pause;
 		cout << "Try another node? ";
 		cin >> _continue;
 	}
 }
 
-void a_star_maze()
-{
-	cout << "Paste your adjaceny matrix here: \n";
-	auto graph = input_maze();
-	
-	bool _continue = true;
-	while (_continue)
-	{
-		Point s, e;
-		s.x = input_node(graph->size(), "Starting X: ");
-		s.y = input_node(graph->size(), "Starting Y: ");
-		e.x = input_node(graph->size(), "End X:");
-		e.y = input_node(graph->size(), "End Y:");
-
-		cout << " ===== DJIKSTRA ALGORITHM =====\n";
-		clock_t tStartD = clock();
-		auto dj = aStarMaze(graph, s, e, false, dijkstra);
-		clock_t deltaD = clock() - tStartD;
-		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
-		printf("This algorithm took %d ticks (%f s)\n\n", deltaD, ((float)deltaD) / CLOCKS_PER_SEC);
-
-		cout << " ===== A* ALGORITHM =====\n";
-		clock_t tStartA = clock();
-		auto d = aStarMaze(graph, s, e, false, mazeHeuristic);
-		clock_t deltaA = clock() - tStartA;
-		cout << "The distance of the node [" << s.x << ", " << s.y << "] to the node [" << e.x << ", " << e.y << "]  is: " << dj << endl;
-		printf("This algorithm took %d ticks (%f s)\n\n", deltaA, ((float)deltaA) / CLOCKS_PER_SEC);
-		
-		pause;
-		cout << "Try another node? ";
-		cin >> _continue;
-	}
-}
-
-void hill_climbing()
-{
-	int numberOfCities = 25;
-	int width = numberOfCities * 30;
-	int height = numberOfCities * 30;
-	int guesses = numberOfCities * 5000;
-
-	auto cities = randomPoints(numberOfCities, width, height);
-	double dist = hillClimbingRestart(cities, swapCities, width, height, guesses);
-	printf("Total distance: %lf\n", dist);
-	delete cities;
-}
+typedef void(*fncs)();
 
 int main()
 {
@@ -385,12 +408,6 @@ int main()
 		rend();
 		pause;
 	}*/
-	//tests();
-
-	//bfs();
-	//dfs();
-	//a_star();
-	//a_star_maze();
 	//auto g = generate_adjmatrix_from_maze();
 	/*while (true)
 	{
@@ -399,9 +416,40 @@ int main()
 			generateRoute(10).print();
 		pause;
 	}*/
-	
-	hill_climbing();
+	//tests();
 
+	fncs functions[] = {bfs, dfs, hill_climbing, a_star_maze};
+	
+	int f = 0;
+	system("CLS");
+	cout << "SELECT AN ALGORITHM: \n";
+	cout << "[0] - BFS\n";
+	cout << "[1] - DFS\n";
+	cout << "[2] - HILL CLIMBING\n";
+	cout << "[3] - A*\n";
+	cout << "[ANY OTHER] - QUIT\n";
+	cin >> f;
+
+	while (f >= 0 && f <= 3)
+	{
+		functions[f]();
+		system("CLS");
+		cout << "SELECT AN ALGORITHM: \n";
+		cout << "[0] - BFS\n";
+		cout << "[1] - DFS\n";
+		cout << "[2] - HILL CLIMBING\n";
+		cout << "[3] - A*\n";
+		cout << "[ANY OTHER] - QUIT\n";
+		cin >> f;
+	}
+	
+	/*
+	bfs();
+	dfs();
+	//a_star();
+	hill_climbing();
+	a_star_maze();	
+	*/
 	pause;
 	return 0;
 }

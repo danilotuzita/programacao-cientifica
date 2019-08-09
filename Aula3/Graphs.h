@@ -65,7 +65,7 @@ Vector< Vector<int>* >* dfsMaze(Vector< Vector<int>* >* graph, Point start, bool
 	bool maximize(double a, double b);
 	Vector< Vector<int>* >* swapCities(Vector<int>* route);
 
-double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter=100, bool(*eval)(double a, double b)=minimize);
+double hillClimbingRestart(Vector<Point>* cities, Vector< Vector<int>* >*(*op)(Vector<int>* route), int width, int height, int maxIter=100, bool(*eval)(double a, double b)=minimize, bool debug=false);
 
 
 // A*
