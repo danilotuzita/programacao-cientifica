@@ -34,6 +34,7 @@ public:
 	void resize(int newSize, T value);   // resizes the vector and fills the new memory spaces with 'value'
 	void resize(int newSize);            // resizes the vector and fills the new memory spaces with an value-initialized
 	void shrink_to_fit();                // resizes the capacity of the vetor to fit its size
+	void clear();                        // pops back all item
 
 	// UTIL
 	inline int size()     const { return _size + 1; };              // gets the real size of the vector
@@ -157,6 +158,9 @@ void Vector<T>::shrink_to_fit()
 
 	_reserve(size());
 }
+
+template<class T>
+inline void Vector<T>::clear() { while (!is_empty()) pop_back(); }
 
 // === BASIC FUNCTIONS === //
 template<class T>

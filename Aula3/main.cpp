@@ -416,6 +416,26 @@ void a_star()
 
 typedef void(*fncs)();
 
+Vector<char[3][3]> generateBoards(char b[3][3])
+{
+	Vector<char[3][3]> ans;
+	return ans;
+}
+
+
+void printBoard(char b[3][3])
+{
+	cout << b << endl;
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			printf("%d ", b[i][j]);
+		}
+		printf("\n");
+	}
+}
+
 int main()
 {
 	/*while (true)
@@ -433,6 +453,7 @@ int main()
 	}*/
 	//tests();
 
+	/*
 	fncs functions[] = {bfs, dfs, hill_climbing, a_star_maze};
 	
 	int f = input();	
@@ -442,6 +463,7 @@ int main()
 		functions[f]();
 		f = input();
 	}
+	*/
 	
 	/*
 	bfs();
@@ -450,6 +472,17 @@ int main()
 	hill_climbing();
 	a_star_maze();	
 	*/
+
+	char board[3][3];
+
+	for (char i = 0; i < 3; i++)
+		for (char j = 0; j < 3; j++)
+			board[i][j] = i * 3 + j + 1;
+	
+	board[1][1] = 0;
+	cout << &board << endl;
+	printBoard(board);
+
 	pause;
 	return 0;
 }
