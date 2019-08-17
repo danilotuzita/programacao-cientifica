@@ -58,7 +58,7 @@ double newtonOptimization(function fnc, Vector<double> p, condition cnd, double 
 	while (cnd(s, 0.0001) && it++ < max_it)
 	{
 		s = derivative(fnc, p, x);
-		x -= beta * s;
+		x = x - (beta * s);
 		if (debug) printf("| f'(x) = %8lf | failed the condition\n", s);
 		f = fnc(x, p);
 		if (debug) printf("f(%8lf) = %8lf ", x, f);
@@ -78,6 +78,7 @@ int main()
 	while (cont0)
 	{
 		int degree;
+		double beta;
 		while (!cont)
 		{
 			p.clear();
@@ -113,9 +114,11 @@ int main()
 		{
 			double in = 0;
 			cout << " ===== GRADIENT DESCENT ===== \n";
+			cout << "Beta: ";
+			cin >> beta;
 			cout << "Starting x: ";
 			cin >> in;
-			double r = newtonOptimization(polynomimal, p, gradientDescent, 0.1, in, 1000, true);
+			double r = newtonOptimization(polynomimal, p, gradientDescent, beta, in, 1000, true);
 			cout << "Nearest minimum: x = " << r << endl;
 			cout << "Try another starting x? ";
 			cin >> cont;
