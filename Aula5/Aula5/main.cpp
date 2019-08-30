@@ -1,4 +1,4 @@
-#include <Vector.hpp>
+#include "Vector.hpp"
 #include <cmath>
 #include <stdexcept>
 
@@ -26,7 +26,7 @@ double binomial(int n, int k)
 }
 
 // DERIVATES AT ANY DEGREE A FUNCTION ref: https://en.wikipedia.org/wiki/Numerical_differentiation#Higher-order_methods
-double derivative(function fnc, double x, int degree=1, double dt=0.000001, bool debug=true)
+double derivative(function fnc, double x, int degree=1, double dt=0.000001, bool debug=false)
 {
 	if (degree  < 0)  throw domain_error("Cannot derivate to negative degree");
 	if (degree == 0) return fnc(x);
@@ -46,7 +46,7 @@ double derivative(function fnc, double x, int degree=1, double dt=0.000001, bool
 }
 
 // DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient
-double derivativeV2(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=true)
+double derivativeV2(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=false)
 {
 	if (degree < 0)  throw domain_error("Cannot derivate to negative degree");
 	if (degree > 4)  throw domain_error("Cannot derivate degree greater than 4");
@@ -106,7 +106,7 @@ double derivativeV2(function fnc, double x, int degree=1, int accuracy=1, double
 }
 
 // DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient
-double derivativeV3(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=true)
+double derivativeV3(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=false)
 {
 	if (degree < 0)  throw domain_error("Cannot derivate to negative degree");
 	if (degree > 4)  throw domain_error("Cannot derivate degree greater than 4");
@@ -170,6 +170,31 @@ double f1(double x) { return pow(e, x); }
 // sqrt(1 - x^2)
 double f2(double x) { return sqrt(1 - pow(x, 2)); }
 
+// (sqrt(1 - x^2))'
+double f2d1(double x)
+{
+	return -x / sqrt(1 - (x * x));
+}
+
+// (sqrt(1 - x^2))''
+double f2d2(double x)
+{
+	double ans = (1 - (x * x)) * sqrt(1 - (x * x));
+	return -1 / ans;
+}
+
+// (sqrt(1 - x^2))'''
+double f2d3(double x)
+{
+	return -(3 * x) / pow((1 - (x * x)), 5 / 2);
+}
+
+// (sqrt(1 - x^2))''''
+double f2d4(double x)
+{
+	return -(3 * (4 * (x * x) + 1)) / pow((1 - (x * x)), 7 / 2);
+}
+
 // e^(-x^2)
 double f3(double x) { return pow(e, -pow(x, 2)); }
 
@@ -177,11 +202,11 @@ double f3(double x) { return pow(e, -pow(x, 2)); }
 
 // RECTANGLE METHOD
 double rectangleMethod(function f, double a, double b) { return (b - a) * f((a + b) / 2); }
-double rectangleMethodError(function f, double a, double b) { return (pow((b - a), 3) / 24) * derivative(f, ((b - a) / 2), 2, .9); };
+double rectangleMethodError(function f, double a, double b) { return (pow((b - a), 3) / 24) * derivativeV3(f, ((b - a) / 2), 2, 5, .00001); };
 
 // TRAPEZOIDAL METHOD
 double trapezoidalRule(function f, double a, double b) { return (b - a) * ((f(a) + f(b)) / 2); }
-double trapezoidalRuleError(function f, double a, double b) { return (pow((b - a), 3) / 36) * derivative(f, ((b - a) / 2), 2, .9); };
+double trapezoidalRuleError(function f, double a, double b) { return (pow((b - a), 3) / 36) * derivativeV3(f, ((b - a) / 2), 2, 5, .00001); };
 
 // SIMPSON'S METHOD
 double simpsonsRule(function f, double a, double b)
@@ -190,7 +215,7 @@ double simpsonsRule(function f, double a, double b)
 	temp /= 6;
 	return (b - a) * temp;
 }
-double simpsonsRuleError(function f, double a, double b) { return -(pow(b - a, 5) / 2880) * derivative(f, (b - a) / 2, 4, 0.9); }
+double simpsonsRuleError(function f, double a, double b) { return -(pow(b - a, 5) / 2880) * derivativeV3(f, (b - a) / 2, 4, 5, 0.01); }
 
 
 // ==== GENERIC ITERATIVE METHOD ==== //
@@ -210,6 +235,40 @@ answer applyMethod(method m, method errm, function f, double a, double b, int st
 	return { ret, errm(f, a, b) };
 }
 
+void main3()
+{
+	double dt = 1;
+	double x_0 = .5;
+	int    acc = 5;
+	double val;
+	cin >> dt;
+	
+	printf("f(%lf) = %lf\n\n", x_0, f1(x_0));
+
+	printf("ans f'(%lf) = %lf\n", x_0, f2d1(x_0));
+	// printf(" v1 f'(%lf) = %lf\n", x_0, derivative(f2, x_0, 1, dt, false));
+	// printf(" v2 f'(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 1, 5, dt, false));
+	printf(" v3 f'(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 1, 5, dt, false));
+
+	printf("ans f''(%lf) = %lf\n", x_0, f2d2(x_0));
+	// printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
+	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 2, 5, dt, false));
+	printf(" v3 f''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 2, 5, dt, false));
+
+	printf("ans f'''(%lf) = %lf\n", x_0, f2d3(x_0));
+	// printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
+	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 2, 5, dt, false));
+	printf(" v3 f'''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 3, 5, dt, false));
+
+	printf("ans f''''(%lf) = %lf\n", x_0, f2d4(x_0));
+	// printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
+	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 2, 5, dt, false));
+	printf(" v3 f''''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 4, 5, dt, false));
+	
+	system("PAUSE");
+}
+
+
 void main2()
 {
 	//cout << derivative(f2, 3, 2) << endl;
@@ -217,29 +276,32 @@ void main2()
 	//printf("i: %d | %lf\n\n", 0, derivativeV2(f1, .1, 0));
 	//printf("i: %d | %lf\n\n", 1, derivativeV2(f1, .1, 1, .1));
 	double inp = 1;
-	double x_0 = 1;
+	double x_0 = .4;
 	int    acc = 5;
+	double val;
 	for (int i = 1; i < 5; i++)
 	{
 		while (inp)
 		{
 			cin >> inp;
-			printf(" **** f(x_0) = %lf\n\n", derivativeV3(f1, x_0, 0));
-
-			double val = derivative(f1, x_0, i, inp);
+			printf(" **** f(x_0) = %lf\n\n", derivativeV3(f2, x_0, 0));
+			
+			val = derivative(f2, x_0, i, inp);
 			printf(" *V1* f");
 			for (int j = 0; j < i; j++) printf("'");
-			printf("(x_0) = %lf\n\n", i, val);
+			printf("(x_0) = %lf\n\n", val);
 
-			val = derivativeV2(f1, x_0, i, acc - 1, inp);
+			val = derivativeV2(f2, x_0, i, acc - 1, inp);
 			printf(" *V2* f");
 			for (int j = 0; j < i; j++) printf("'");
-			printf("(x_0) = %lf\n\n", i, val);
-
-			val = derivativeV3(f1, x_0, i, acc, inp);
+			printf("(x_0) = %lf\n\n", val);
+			
+			val = derivativeV3(f2, x_0, i, acc, inp);
 			printf(" *V3* f");
 			for (int j = 0; j < i; j++) printf("'");
-			printf("(x_0) = %lf\n\n", i, val);
+			printf("(x_0) = %lf\n\n", val);
+
+			printf("f''(x_0) = %lf\n", f2d2(x_0));
 		}
 		system("CLS");
 		inp = 1;
@@ -252,7 +314,7 @@ void main2()
 
 int main()
 {
-	main2();
+	// while(true) main3();
 	function f[] = {f1, f2, f3};
 	method m[]  = {rectangleMethod     , trapezoidalRule     , simpsonsRule};
 	method me[] = {rectangleMethodError, trapezoidalRuleError, simpsonsRuleError};
@@ -262,16 +324,18 @@ int main()
 		" SIMPSON'S METHOD "
 	};
 	string funct[] = { "e^x", "sqrt(1 - x^2)",	"e^(-x^2)" };
+	
+	double start = 0;
+	double end = 1;
 	int steps = 4;
-
 	for (int i = 0; i < 3; i++)
 	{
-		cout << "=== " << funct[i] << " ===" << endl;
+		cout << "=== [f(x) = " << funct[i] << "] ===" << endl;
 		for (int j = 0; j < 3; j++)
 		{
 			cout << " ++ " << name[j] << " ++ (steps: " << steps << ")" << endl;
-			answer a = applyMethod(m[j], me[j], f[i], 0, 1, steps, false);
-			printf("f(x) = %lf\nerro = %lf\n\n", a.ans, a.err);
+			answer a = applyMethod(m[j], me[j], f[i], start, end, steps, false);
+			printf("Integral of f(x) = %lf from %lf to %lf\nerror of %lf\n\n", a.ans, start, end, a.err);
 		}
 		cout << endl;
 	}
