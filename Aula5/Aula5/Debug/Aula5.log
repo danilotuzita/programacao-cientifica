@@ -1,2 +1,11 @@
 ﻿  main.cpp
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(232): warning C4477: 'printf' : format string '%lf' requires an argument of type 'double', but variadic argument 1 has type 'int'
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(232): warning C4474: 'printf' : too many arguments passed for format string
+  d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(232): note: placeholders and their parameters expect 1 variadic arguments, but 2 were provided
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(237): warning C4477: 'printf' : format string '%lf' requires an argument of type 'double', but variadic argument 1 has type 'int'
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(237): warning C4474: 'printf' : too many arguments passed for format string
+  d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(237): note: placeholders and their parameters expect 1 variadic arguments, but 2 were provided
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(242): warning C4477: 'printf' : format string '%lf' requires an argument of type 'double', but variadic argument 1 has type 'int'
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(242): warning C4474: 'printf' : too many arguments passed for format string
+  d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula5\aula5\main.cpp(242): note: placeholders and their parameters expect 1 variadic arguments, but 2 were provided
   Aula5.vcxproj -> D:\Danilo S. Tuzita\Documents\FEI\Mestrado\1.programacao-cientifica\Aula5\Debug\Aula5.exe
