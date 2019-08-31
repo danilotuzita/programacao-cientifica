@@ -15,17 +15,13 @@ unsigned int factorial(int n)
 {
 	if (n < 0)  throw domain_error("Cannot factor negative numbers");
 	if (n > 12) throw overflow_error("Cannot fit !" + to_string(n) + " in a uint");
-	return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n; 
+	return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n; // if n <= 1 return 1 else calculates the previous factorial and multiply by n
 }
 
 // CALCULATES A BINOMIAL COEFFICIENT
-double binomial(int n, int k)
-{
-	unsigned int ans = factorial(k) * factorial(n - k);
-	return factorial(n) / ans;
-}
+double binomial(int n, int k) { return factorial(n) / (factorial(k) * factorial(n - k)); }
 
-// DERIVATES AT ANY DEGREE A FUNCTION ref: https://en.wikipedia.org/wiki/Numerical_differentiation#Higher-order_methods
+// (DOES NOT WORK) DERIVATES AT ANY DEGREE A FUNCTION ref: https://en.wikipedia.org/wiki/Numerical_differentiation#Higher-order_methods
 double derivative(function fnc, double x, int degree=1, double dt=0.000001, bool debug=false)
 {
 	if (degree  < 0)  throw domain_error("Cannot derivate to negative degree");
@@ -45,7 +41,7 @@ double derivative(function fnc, double x, int degree=1, double dt=0.000001, bool
 	return ans * (1 / pow(dt, degree));
 }
 
-// DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient
+// (DOES NOT WORK) DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient#Central_finite_difference
 double derivativeV2(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=false)
 {
 	if (degree < 0)  throw domain_error("Cannot derivate to negative degree");
@@ -105,7 +101,7 @@ double derivativeV2(function fnc, double x, int degree=1, int accuracy=1, double
 	return ans;
 }
 
-// DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient
+// DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient#Forward_finite_difference
 double derivativeV3(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=false)
 {
 	if (degree < 0)  throw domain_error("Cannot derivate to negative degree");
@@ -170,6 +166,10 @@ double f1(double x) { return pow(e, x); }
 // sqrt(1 - x^2)
 double f2(double x) { return sqrt(1 - pow(x, 2)); }
 
+// e^(-x^2)
+double f3(double x) { return pow(e, -pow(x, 2)); }
+
+// f2 derivatives
 // (sqrt(1 - x^2))'
 double f2d1(double x)
 {
@@ -195,17 +195,15 @@ double f2d4(double x)
 	return -(3 * (4 * (x * x) + 1)) / pow((1 - (x * x)), 7 / 2);
 }
 
-// e^(-x^2)
-double f3(double x) { return pow(e, -pow(x, 2)); }
 
 // ==== METHODS ==== //
 
 // RECTANGLE METHOD
-double rectangleMethod(function f, double a, double b) { return (b - a) * f((a + b) / 2); }
+double rectangleMethod(function f, double a, double b)      { return (b - a) * f((a + b) / 2); }
 double rectangleMethodError(function f, double a, double b) { return (pow((b - a), 3) / 24) * derivativeV3(f, ((b - a) / 2), 2, 5, .00001); };
 
 // TRAPEZOIDAL METHOD
-double trapezoidalRule(function f, double a, double b) { return (b - a) * ((f(a) + f(b)) / 2); }
+double trapezoidalRule(function f, double a, double b)      { return (b - a) * ((f(a) + f(b)) / 2); }
 double trapezoidalRuleError(function f, double a, double b) { return (pow((b - a), 3) / 36) * derivativeV3(f, ((b - a) / 2), 2, 5, .00001); };
 
 // SIMPSON'S METHOD
@@ -219,28 +217,33 @@ double simpsonsRuleError(function f, double a, double b) { return -(pow(b - a, 5
 
 
 // ==== GENERIC ITERATIVE METHOD ==== //
+// integrates a function handling a passed method and method error
 answer applyMethod(method m, method errm, function f, double a, double b, int steps, bool debug=false)
 {
 	double ret = 0;
-	for (int i = 0; i < steps; i++)
+	double err = 0;
+	for (int i = 0; i < steps; i++)  // for each quadrant
 	{
-		double _a = i * (b / steps);
-		double _b = (i + 1) * (b / steps);
-		double val = m(f, _a, _b);
+		double _a = i * (b / steps);       // calculates quandrant's a
+		double _b = (i + 1) * (b / steps); // calculates quandrant's b
+		double val = m(f, _a, _b);         // calculates the integral using passed method
+
+		ret += val;             // adds the calculated integral to the total area
+		err += errm(f, _a, _b); // calculates the method error and adds it to the total error
 
 		if (debug) printf("a: %lf, b: %lf: %lf\n", _a, _b, val);
-		ret += val;
 	}
 
-	return { ret, errm(f, a, b) };
+	return { ret, err };
 }
 
+
+// ==== TEST FUNCTIONS ==== //
 void main3()
 {
 	double dt = 1;
 	double x_0 = .5;
 	int    acc = 5;
-	double val;
 	cin >> dt;
 	
 	printf("f(%lf) = %lf\n\n", x_0, f1(x_0));
@@ -267,7 +270,6 @@ void main3()
 	
 	system("PAUSE");
 }
-
 
 void main2()
 {
@@ -312,9 +314,11 @@ void main2()
 	//cout << f4(10);
 }
 
+// ==== MAIN ==== //
 int main()
 {
 	// while(true) main3();
+	// setting up functions and methods
 	function f[] = {f1, f2, f3};
 	method m[]  = {rectangleMethod     , trapezoidalRule     , simpsonsRule};
 	method me[] = {rectangleMethodError, trapezoidalRuleError, simpsonsRuleError};
@@ -325,21 +329,44 @@ int main()
 	};
 	string funct[] = { "e^x", "sqrt(1 - x^2)",	"e^(-x^2)" };
 	
-	double start = 0;
-	double end = 1;
-	int steps = 4;
-	for (int i = 0; i < 3; i++)
-	{
-		cout << "=== [f(x) = " << funct[i] << "] ===" << endl;
-		for (int j = 0; j < 3; j++)
-		{
-			cout << " ++ " << name[j] << " ++ (steps: " << steps << ")" << endl;
-			answer a = applyMethod(m[j], me[j], f[i], start, end, steps, false);
-			printf("Integral of f(x) = %lf from %lf to %lf\nerror of %lf\n\n", a.ans, start, end, a.err);
-		}
-		cout << endl;
-	}
+	bool _continue = true;
 
+	while (_continue)
+	{
+		system("CLS");
+		int steps = 1;                   // starting count of steps (quadrants) = 2^steps
+		int max_steps = (int)pow(2, 10); // max steps until give up
+		double max_error = 0.1;          // maximum error allowed
+
+		cout << "Input maximum error: ";
+		cin >> max_error;
+
+		double start = 0; // starting x
+		double end = 1;   // end x
+		for (int i = 0; i < 3; i++) // for each function
+		{
+			cout << "=== [f(x) = " << funct[i] << "] ===" << endl;
+			for (int j = 0; j < 3; j++) // for each method
+			{
+				answer a = { 0, 9999 };
+				while (pow(2, steps) <= max_steps) // while max steps have not been hit
+				{
+					a = applyMethod(m[j], me[j], f[i], start, end, (int)pow(2, steps), false); // calculates the integral
+					if (a.err <= max_error) break; // if the error is in the threshold breaks
+					steps++; // adds a step
+				}
+
+				cout << " ++ " << name[j] << " ++ (steps: " << pow(2, steps) << "/" << max_steps << ")" << endl;
+				printf(" ++ %s ++ (steps: %d/%d)\n", name[j].c_str(), (int)pow(2, steps), (int)max_steps);
+				printf("Integral of f(x) = %lf from %lf to %lf\nerror of %lf\n\n", a.ans, start, end, a.err);
+			}
+			cout << endl;
+		}
+
+		cout << "Try again? ";
+		cin >> _continue;
+	}
+	
 	system("PAUSE");
 	return 0;
 }
