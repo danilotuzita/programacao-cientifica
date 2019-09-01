@@ -1,8 +1,10 @@
-#include "Vector.hpp"
 #include <cmath>
+#include <string>
+#include <iostream>
 #include <stdexcept>
 
 #define e exp(1.)
+#define uint unsigned int
 
 using namespace std;
 
@@ -11,7 +13,7 @@ typedef double(*method)(function, double, double);
 typedef struct { double ans, err; } answer;
 
 // CALCULATES A FACTORIAL
-unsigned int factorial(int n)
+uint factorial(int n)
 {
 	if (n < 0)  throw domain_error("Cannot factor negative numbers");
 	if (n > 12) throw overflow_error("Cannot fit !" + to_string(n) + " in a uint");
@@ -102,12 +104,14 @@ double derivativeV2(function fnc, double x, int degree=1, int accuracy=1, double
 }
 
 // DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient#Forward_finite_difference
-double derivativeV3(function fnc, double x, int degree=1, int accuracy=1, double dt=0.000001, bool debug=false)
+double derivativeV3(function fnc, double x, int degree=1, uint accuracy=1, double dt=0.000001, bool debug=false)
 {
 	if (degree < 0)  throw domain_error("Cannot derivate to negative degree");
 	if (degree > 4)  throw domain_error("Cannot derivate degree greater than 4");
 	if (degree == 0) return fnc(x);
 	//if (degree == 1) return (fnc(x) - fnc(x - dt)) / dt;
+	
+	accuracy %= 6; // asserting accuracy is between 0 and 5
 	
 	double vec[4][6][9] = 
 	{
@@ -227,11 +231,13 @@ answer applyMethod(method m, method errm, function f, double a, double b, int st
 		double _a = i * (b / steps);       // calculates quandrant's a
 		double _b = (i + 1) * (b / steps); // calculates quandrant's b
 		double val = m(f, _a, _b);         // calculates the integral using passed method
+		double cerr = errm(f, _a, _b);     // calculates the method error
 
-		ret += val;             // adds the calculated integral to the total area
-		err += errm(f, _a, _b); // calculates the method error and adds it to the total error
+		ret += val;  // adds the calculated integral to the total area
+		err += cerr; // adds the calculated error to the total error
 
 		if (debug) printf("a: %lf, b: %lf: %lf\n", _a, _b, val);
+		if (debug) printf("\terr: %lf\n", cerr);
 	}
 
 	return { ret, err };
@@ -249,26 +255,24 @@ void main3()
 	printf("f(%lf) = %lf\n\n", x_0, f1(x_0));
 
 	printf("ans f'(%lf) = %lf\n", x_0, f2d1(x_0));
-	// printf(" v1 f'(%lf) = %lf\n", x_0, derivative(f2, x_0, 1, dt, false));
+	printf(" v1 f'(%lf) = %lf\n", x_0, derivative(f2, x_0, 1, dt, false));
 	// printf(" v2 f'(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 1, 5, dt, false));
 	printf(" v3 f'(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 1, 5, dt, false));
 
 	printf("ans f''(%lf) = %lf\n", x_0, f2d2(x_0));
-	// printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
+	printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
 	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 2, 5, dt, false));
 	printf(" v3 f''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 2, 5, dt, false));
 
 	printf("ans f'''(%lf) = %lf\n", x_0, f2d3(x_0));
-	// printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
+	printf(" v1 f'''(%lf) = %lf\n", x_0, derivative(f2, x_0, 3, dt, false));
 	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 2, 5, dt, false));
 	printf(" v3 f'''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 3, 5, dt, false));
 
 	printf("ans f''''(%lf) = %lf\n", x_0, f2d4(x_0));
-	// printf(" v1 f''(%lf) = %lf\n", x_0, derivative(f2, x_0, 2, dt, false));
-	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 2, 5, dt, false));
+	printf(" v1 f''''(%lf) = %lf\n", x_0, derivative(f2, x_0, 4, dt, false));
+	// printf(" v2 f''(%lf) = %lf\n", x_0, derivativeV2(f2, x_0, 4, 5, dt, false));
 	printf(" v3 f''''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 4, 5, dt, false));
-	
-	system("PAUSE");
 }
 
 void main2()
@@ -348,7 +352,7 @@ int main()
 			cout << "=== [f(x) = " << funct[i] << "] ===" << endl;
 			for (int j = 0; j < 3; j++) // for each method
 			{
-				answer a = { 0, 9999 };
+				answer a;
 				while (pow(2, steps) <= max_steps) // while max steps have not been hit
 				{
 					a = applyMethod(m[j], me[j], f[i], start, end, (int)pow(2, steps), false); // calculates the integral
@@ -356,7 +360,6 @@ int main()
 					steps++; // adds a step
 				}
 
-				cout << " ++ " << name[j] << " ++ (steps: " << pow(2, steps) << "/" << max_steps << ")" << endl;
 				printf(" ++ %s ++ (steps: %d/%d)\n", name[j].c_str(), (int)pow(2, steps), (int)max_steps);
 				printf("Integral of f(x) = %lf from %lf to %lf\nerror of %lf\n\n", a.ans, start, end, a.err);
 			}
