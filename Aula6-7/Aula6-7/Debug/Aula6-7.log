@@ -1,0 +1,5 @@
+﻿  main.cpp
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula6-7\aula6-7\main.cpp(90): error C2955: 'std::rank': use of class template requires template argument list
+  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.16.27023\include\type_traits(1372): note: see declaration of 'std::rank'
+d:\danilo s. tuzita\documents\fei\mestrado\1.programacao-cientifica\aula6-7\aula6-7\main.cpp(90): error C2660: 'MPI_Comm_rank': function does not take 1 arguments
+  c:\program files (x86)\microsoft sdks\mpi\include\mpi.h(3109): note: see declaration of 'MPI_Comm_rank'
