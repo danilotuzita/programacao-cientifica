@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define pause system("PAUSE")
 #define MASTER 0
 
 using namespace std;
@@ -14,7 +15,7 @@ typedef double(*method)(function, double, double);
 typedef struct { double a, b; } dimension;
 
 // select a random value between a and b
-double getRandom(double a, double b) { return (rand() / (RAND_MAX)) * (b - a) + a; }
+double getRandom(double a, double b) { return ((double)rand() / (RAND_MAX)) * (b - a) + a; }
 
 // select a random value between a and b
 double getRandom(dimension x) { return getRandom(x.a, x.b); }
@@ -25,7 +26,7 @@ double f1(double x) { return 4 / (1 - pow(x, 2)); }
 // sqrt(x + sqrt(x))
 double f2(double x) { return sqrt(x + sqrt(x)); }
 
-// returns if passed coordnates are in the torus volume
+// returns if passed coordnates are within the torus volume
 bool isToroid(double x, double y, double z)
 {
 	return pow(z, 2) + pow(sqrt(pow(x, 2) + pow(y, 2)) - 3, 2) <= 1 ? true : false;
@@ -35,6 +36,7 @@ bool isToroid(double x, double y, double z)
 double monteCarlo(function fnc, double a, double b, int n, bool debug=false)
 {
 	double total = 0;
+	if (debug) printf("n: %d\t", n);
 	for (int i = 0; i < n; i++)
 		total += fnc(getRandom(a, b));
 	if (debug) printf("total: %lf\n", total);
@@ -42,7 +44,7 @@ double monteCarlo(function fnc, double a, double b, int n, bool debug=false)
 }
 
 
-double monteCarlo3D(function3d fnc, dimension x, dimension y, dimension z, unsigned int n, bool debug=true)
+double monteCarlo3D(function3d fnc, dimension x, dimension y, dimension z, unsigned int n, bool debug=false)
 {
 	double deltaX = x.b - x.a;
 	double deltaY = y.b - y.a;
@@ -62,41 +64,79 @@ double monteCarlo3D(function3d fnc, dimension x, dimension y, dimension z, unsig
 }
 
 
-void ex1()
+void ex1(int start, int end, function fnc, int threads=1, int threadId=MASTER, bool debug = false)
 {
-	for (int i = 100; i < 100000; i *= 10)
-		printf("%d: %lf\n", i, monteCarlo(f1, 0, 1, i));
-	printf("\n");
-	for (int i = 100; i < 100000000; i *= 10)
-		printf("%d: %lf\n", i, monteCarlo(f2, 0, 1, i));
+	if (threadId == MASTER) printf("EX 1 | Number of threads: %d\n", threads);
+	for (int i = start; i <= end; i *= 10)
+	{
+		double totalAverage = 0;
+		double threadAvg = monteCarlo(fnc, 0, 1, i / threads);
+		if(debug) printf("T: %d | n: %9d | calc: %lf\n", threadId, i, threadAvg);
+
+		MPI_Reduce(&threadAvg, &totalAverage, 1, MPI_DOUBLE, MPI_SUM, MASTER, MPI_COMM_WORLD);
+		if (threadId == MASTER)
+		{
+			totalAverage /= threads;
+			printf("%d: %lf\n", i, totalAverage);
+		}
+	}
 }
 
 
-void ex2()
+void ex2(int start, int end, int threads=1, int threadId=MASTER, bool debug=false)
 {
-	dimension x = {  1, 4 };
+	dimension x = { 1, 4 };
 	dimension y = { -3, 4 };
 	dimension z = { -2, 2 };
 
-	for (int i = 100; i <= 100000000; i *= 10)
-		printf("%d: %lf\n", i, monteCarlo3D(isToroid, x, y, z, i));
+	/*for (int i = start; i <= end; i *= 10)
+		printf("%d: %lf\n", i, monteCarlo3D(isToroid, x, y, z, i));*/
+
+	if (threadId == MASTER) printf("EX 2 | Number of threads: %d\n", threads);
+	for (int i = start; i <= end; i *= 10)
+	{
+		double totalAverage = 0;
+		double threadAvg = monteCarlo3D(isToroid, x, y, z, i / threads);
+		if(debug) printf("T: %d | n: %9d | calc: %lf\n", threadId, i, threadAvg);
+
+		MPI_Reduce(&threadAvg, &totalAverage, 1, MPI_DOUBLE, MPI_SUM, MASTER, MPI_COMM_WORLD);
+		if (threadId == MASTER)
+		{
+			totalAverage /= threads;
+			printf("%d: %lf\n", i, totalAverage);
+		}
+	}
 }
 
 
 int main(int argc, char* argv[])
 {
 	srand((unsigned int)time(NULL));
-	
-	int taskId, numTask;
+
+	int threads, threadId;
 	MPI_Init(&argc, &argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &taskId);
-	MPI_Comm_size(MPI_COMM_WORLD, &numTask);
+	MPI_Comm_rank(MPI_COMM_WORLD, &threadId);
+	MPI_Comm_size(MPI_COMM_WORLD, &threads);
 
 
-	//ex1();
-	ex2();
+	double start, end;
+	start = MPI_Wtime();
+	ex1(100, 100000000, f1, threads, threadId);
+	end = MPI_Wtime();
+	if (threadId == MASTER) printf("Time: %lf\n\n", end - start);
 
+	start = MPI_Wtime();
+	ex1(100, 100000000, f2, threads, threadId);
+	end = MPI_Wtime();
+	if (threadId == MASTER) printf("Time: %lf\n\n", end - start);
+
+	start = MPI_Wtime();
+	ex2(100, 100000000, threads, threadId);
+	end = MPI_Wtime();
+	if (threadId == MASTER) printf("Time: %lf\n\n", end - start);
+
+	if (threadId == MASTER) pause;
 	MPI_Finalize();
-	system("PAUSE");
+
 	return 0;
 }
