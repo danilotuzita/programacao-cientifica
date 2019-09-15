@@ -3,21 +3,21 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <windows.h>
 
 #define e exp(1.)
 #define uint unsigned int
-
-using namespace std;
+#define THREADS 32
 
 typedef double(*function)(double);
 typedef double(*method)(function, double, double);
 typedef struct { double ans, err; } answer;
 
 // DERIVATES A FUNCTION DEGREES(0 - 4) ref: https://en.wikipedia.org/wiki/Finite_difference_coefficient#Forward_finite_difference
-double derivativeV3(function fnc, double x, int degree=1, uint accuracy=1, double dt=0.000001, bool debug=false)
+double derivative(function fnc, double x, int degree=1, uint accuracy=1, double dt=0.000001, bool debug=false)
 {
-	if (degree < 0)  throw domain_error("Cannot derivate to negative degree");
-	if (degree > 4)  throw domain_error("Cannot derivate degree greater than 4");
+	if (degree  < 0) throw std::domain_error("Cannot derivate to negative degree");
+	if (degree  > 4) throw std::domain_error("Cannot derivate degree greater than 4");
 	if (degree == 0) return fnc(x);
 	if (degree == 1) return (fnc(x) - fnc(x - dt)) / dt;
 	
@@ -59,7 +59,7 @@ double derivativeV3(function fnc, double x, int degree=1, uint accuracy=1, doubl
 	if (debug) printf("Derivating f(%lf) in %d degree, Accuracy of %d, dt of %lf\n", x, degree, accuracy + 1, dt);
 
 	double ans = 0;
-	#pragma omp parallel for reduction(+:ans)
+	#pragma omp parallel for reduction(+:ans) num_threads(THREADS)
 	for (int i = 0; i <= 8; i++)
 	{
 		double smt = vec[degree - 1][accuracy][i];  // getting multiplier
@@ -74,6 +74,7 @@ double derivativeV3(function fnc, double x, int degree=1, uint accuracy=1, doubl
 	return ans;
 }
 
+
 // ==== FUNCTIONS ==== //
 // e^x
 double f1(double x) { return pow(e, x); }
@@ -84,42 +85,15 @@ double f2(double x) { return sqrt(1 - pow(x, 2)); }
 // e^(-x^2)
 double f3(double x) { return pow(e, -pow(x, 2)); }
 
-// f2 derivatives
-// (sqrt(1 - x^2))'
-double f2d1(double x)
-{
-	return -x / sqrt(1 - (x * x));
-}
-
-// (sqrt(1 - x^2))''
-double f2d2(double x)
-{
-	double ans = (1 - (x * x)) * sqrt(1 - (x * x));
-	return -1 / ans;
-}
-
-// (sqrt(1 - x^2))'''
-double f2d3(double x)
-{
-	return -(3 * x) / pow((1 - (x * x)), 5 / 2);
-}
-
-// (sqrt(1 - x^2))''''
-double f2d4(double x)
-{
-	return -(3 * (4 * (x * x) + 1)) / pow((1 - (x * x)), 7 / 2);
-}
-
 
 // ==== METHODS ==== //
-
 // RECTANGLE METHOD
 double rectangleMethod(function f, double a, double b)      { return (b - a) * f((a + b) / 2); }
-double rectangleMethodError(function f, double a, double b) { return (pow((b - a), 3) / 24) * derivativeV3(f, ((b - a) / 2), 2, 5, .00001); };
+double rectangleMethodError(function f, double a, double b) { return (pow((b - a), 3) / 24) * derivative(f, ((b - a) / 2), 2, 5, .00001); };
 
 // TRAPEZOIDAL METHOD
 double trapezoidalRule(function f, double a, double b)      { return (b - a) * ((f(a) + f(b)) / 2); }
-double trapezoidalRuleError(function f, double a, double b) { return (pow((b - a), 3) / 36) * derivativeV3(f, ((b - a) / 2), 2, 5, .00001); };
+double trapezoidalRuleError(function f, double a, double b) { return (pow((b - a), 3) / 36) * derivative(f, ((b - a) / 2), 2, 5, .00001); };
 
 // SIMPSON'S METHOD
 double simpsonsRule(function f, double a, double b)
@@ -128,136 +102,86 @@ double simpsonsRule(function f, double a, double b)
 	temp /= 6;
 	return (b - a) * temp;
 }
-double simpsonsRuleError(function f, double a, double b) { return -(pow(b - a, 5) / 2880) * derivativeV3(f, (b - a) / 2, 4, 5, 0.01); }
+double simpsonsRuleError(function f, double a, double b) { return -(pow(b - a, 5) / 2880) * derivative(f, (b - a) / 2, 4, 5, 0.01); }
 
 
 // ==== GENERIC ITERATIVE METHOD ==== //
 // integrates a function handling a passed method and method error
 answer applyMethod(method m, method errm, function f, double a, double b, int steps, bool debug=false)
 {
+	double quadrantSize = (b - a) / steps;
+
 	double ret = 0;
-	double err = 0;
-	#pragma omp parallel for reduction(+:ret,err)
+	double err = errm(f, a, a + quadrantSize) * steps; // calculates the estimated error for quadrant size and multiply by the amount of quadrants
+
+	#pragma omp parallel for reduction(+:ret)
 	for (int i = 0; i < steps; i++)  // for each quadrant
 	{
-		double _a = i * (b / steps);       // calculates quandrant's a
-		double _b = (i + 1) * (b / steps); // calculates quandrant's b
-		double val = m(f, _a, _b);         // calculates the integral using passed method
-		double cerr = errm(f, _a, _b);     // calculates the method error
-
-		ret += val;  // adds the calculated integral to the total area
-		err += cerr; // adds the calculated error to the total error
-
-		if (debug) printf("(thread: %d)\na: %lf, b: %lf: %lf\n\terr: %lf\n", omp_get_thread_num(), _a, _b, val, cerr);
-	}
-
-	return { ret, err };
-}
-
-
-// ==== TEST FUNCTIONS ==== //
-void main3()
-{
-	bool debug = false;
-	double dt = 1;
-	double x_0 = .5;
-	int    acc = 5;
-	cin >> dt;
-	
-	printf("f(%lf) = %lf\n\n", x_0, f1(x_0));
-
-	printf("ans f'(%lf) = %lf\n", x_0, f2d1(x_0));
-	printf(" v3 f'(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 1, 5, dt, debug));
-
-	printf("ans f''(%lf) = %lf\n", x_0, f2d2(x_0));
-	printf(" v3 f''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 2, 5, dt, debug));
-
-	printf("ans f'''(%lf) = %lf\n", x_0, f2d3(x_0));
-	printf(" v3 f'''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 3, 5, dt, debug));
-
-	printf("ans f''''(%lf) = %lf\n", x_0, f2d4(x_0));
-	printf(" v3 f''''(%lf) = %lf\n\n", x_0, derivativeV3(f2, x_0, 4, 5, dt, debug));
-}
-
-void main2()
-{
-	double inp = 1;
-	double x_0 = .4;
-	int    acc = 5;
-	double val;
-	for (int i = 1; i < 5; i++)
-	{
-		while (inp)
-		{
-			cin >> inp;
-			printf(" **** f(x_0) = %lf\n\n", derivativeV3(f2, x_0, 0));
-			
-			val = derivativeV3(f2, x_0, i, acc, inp);
-			printf(" *V3* f");
-			for (int j = 0; j < i; j++) printf("'");
-			printf("(x_0) = %lf\n\n", val);
-
-			printf("f''(x_0) = %lf\n", f2d2(x_0));
-		}
-		system("CLS");
-		inp = 1;
-	}
+		double _a = a + ((i)     * quadrantSize); // calculates quandrant's a
+		double _b = a + ((i + 1) * quadrantSize); // calculates quandrant's b
 		
-	
-	system("PAUSE");
+		double val = m(f, _a, _b); // calculates the integral using passed method
+		ret += val;                // adds the calculated integral to the total area
+
+		if (debug) printf("(thread: %2d cpu: %2d) [a: %6lf, b: %6lf] = %6lf\n", omp_get_thread_num(), GetCurrentProcessorNumber(), _a, _b, val);
+	}
+
+	return { ret, abs(err) };
 }
 
 // ==== MAIN ==== //
 int main()
 {
-	// while(true) main3();
+	// setting up omp
+	omp_set_dynamic(0);
+	
 	// setting up functions and methods
 	function f[] = {f1, f2, f3};
 	method m[]  = {rectangleMethod     , trapezoidalRule     , simpsonsRule};
 	method me[] = {rectangleMethodError, trapezoidalRuleError, simpsonsRuleError};
-	string name[] = {
+	std::string funct[] = { "e^x", "sqrt(1 - x^2)",	"e^(-x^2)" };
+	std::string  name[] = {
 		" RECTANGLE METHOD ",
 		"TRAPEZOIDAL METHOD",
 		" SIMPSON'S METHOD "
 	};
-	string funct[] = { "e^x", "sqrt(1 - x^2)",	"e^(-x^2)" };
 	
-	bool _continue = true;
+	// setting up execution variables
+	int steps = 10000000; // number of divisions of the interval
+	double start = 0; // starting x
+	double   end = 1; // end x
 
-	while (_continue)
+	bool csvlike = true;
+	int threads[6] = {1, 2, 4, 8, 16, 32};
+	
+	for (int t = 0; t < 6; t++)
 	{
-		system("CLS");
-		int steps = 1;                   // starting count of steps (quadrants) = 2^steps
-		int max_steps = (int)pow(2, 10); // max steps until give up
-		double max_error = 0.1;          // maximum error allowed
+		omp_set_num_threads(threads[t]);
+		
+		if (!csvlike) printf("NUMBER OF THREADS: %d\n", threads[t]);
 
-		cout << "Input maximum error: ";
-		cin >> max_error;
-
-		double start = 0; // starting x
-		double end = 1;   // end x
 		for (int i = 0; i < 3; i++) // for each function
 		{
-			cout << "=== [f(x) = " << funct[i] << "] ===" << endl;
+			if (!csvlike) printf("=== [f(x) = %s] ===\n", funct[i].c_str());
+			else          printf("f(x) = %s\nThreads|Metodo|Resultado|Erro|Tempo\n", funct[i].c_str());
+			
 			for (int j = 0; j < 3; j++) // for each method
 			{
-				answer a;
-				while (pow(2, steps) <= max_steps) // while max steps have not been hit
-				{
-					a = applyMethod(m[j], me[j], f[i], start, end, (int)pow(2, steps), false); // calculates the integral
-					if (a.err <= max_error) break; // if the error is in the threshold breaks
-					steps++; // adds a step
-				}
-
-				printf(" ++ %s ++ (steps: %d/%d)\n", name[j].c_str(), (int)pow(2, steps), (int)max_steps);
-				printf("Integral of f(x) = %lf from %lf to %lf\nerror of %lf\n\n", a.ans, start, end, a.err);
+				if (!csvlike) printf(" ++ %s ++ (steps: %d)\n", name[j].c_str(), steps);
+				else          printf("%d|%s|", threads[t], name[j].c_str());
+				
+				double startTime = omp_get_wtime();
+				answer a = applyMethod(m[j], me[j], f[i], start, end, steps, false); // calculating the integral
+				double endTime = omp_get_wtime();
+				
+				if (!csvlike) printf("Integral f(x)[a: %6lf, b: %6lf] = %6lf | err: %6lf\n", start, end, a.ans, a.err);
+				if (!csvlike) printf("Time: %6lf\n\n", endTime - startTime);
+				else          printf("%lf|%lf|%lf\n", a.ans, a.err, endTime - startTime);
 			}
-			cout << endl;
+			
+			printf("\n");
 		}
-
-		cout << "Try again? ";
-		cin >> _continue;
-	}
+	}	
 	
 	system("PAUSE");
 	return 0;
