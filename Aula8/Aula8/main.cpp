@@ -7,7 +7,6 @@
 
 #define e exp(1.)
 #define uint unsigned int
-#define THREADS 32
 
 typedef double(*function)(double);
 typedef double(*method)(function, double, double);
@@ -59,7 +58,7 @@ double derivative(function fnc, double x, int degree=1, uint accuracy=1, double 
 	if (debug) printf("Derivating f(%lf) in %d degree, Accuracy of %d, dt of %lf\n", x, degree, accuracy + 1, dt);
 
 	double ans = 0;
-	#pragma omp parallel for reduction(+:ans) num_threads(THREADS)
+	#pragma omp parallel for reduction(+:ans)
 	for (int i = 0; i <= 8; i++)
 	{
 		double smt = vec[degree - 1][accuracy][i];  // getting multiplier
